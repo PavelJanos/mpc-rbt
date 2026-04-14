@@ -9,10 +9,11 @@ if isempty(lidar_distances) || all(~isfinite(lidar_distances))
     return;
 end
 
-% Use Gaussian likelihood on per-channel residuals.
-sigma_lidar = 0.15;
+% Use a softer Gaussian likelihood on per-channel residuals.
+sigma_lidar = 0.22;
 inv_two_sigma2 = 1 / (2 * sigma_lidar^2);
 eps_w = 1e-12;
+missing_penalty = 0.18;
 
 z = lidar_distances(:)';
 finite_z = isfinite(z);
@@ -31,7 +32,13 @@ for i = 1:N
     end
 
     err = h(valid) - z(valid);
-    cost = sum(err.^2);
+    cost = mean(err.^2);
+
+    mismatch = xor(finite_z, isfinite(h));
+    if any(mismatch)
+        cost = cost + missing_penalty * mean(mismatch);
+    end
+
     weights(i) = exp(-cost * inv_two_sigma2) + eps_w;
 end
 

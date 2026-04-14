@@ -4,7 +4,7 @@ function [public_vars] = init_particle_filter(read_only_vars, public_vars)
 map = read_only_vars.map;
 limits = map.limits; % [xmin ymin xmax ymax]
 
-N = 700;
+N = 1000;
 safe_margin = 0.12;
 max_tries = 200000;
 
@@ -31,6 +31,7 @@ if filled < N
 end
 
 public_vars.particles = particles;
+public_vars.particle_weights = ones(size(particles, 1), 1) / max(size(particles, 1), 1);
 public_vars.pf_enabled = 1;
 
 end

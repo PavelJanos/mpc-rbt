@@ -1,3 +1,10 @@
-start_position = [2, 2, pi/2]; % (x, y, theta)
+map_name = 'maps/indoor_3.txt';
 
-map_name = 'maps/outdoor_1.txt';
+% Default start position (x, y, theta)
+start_position = [1, 1, 1.0*pi/2];
+
+
+
+
+
+

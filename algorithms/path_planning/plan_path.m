@@ -1,105 +1,215 @@
-function [path] = plan_path(read_only_vars, public_vars)
+function [path, raw_path] = plan_path(read_only_vars, public_vars)
 %PLAN_PATH Summary of this function goes here
 
-if is_indoor_1_map(read_only_vars.map)
-    % Task3/Task2: handcrafted safe path with curved segments.
-    path = create_task3_task2_path();
+% Reuse current path unless explicit replanning is requested.
+if isfield(public_vars, 'path') && ~isempty(public_vars.path) ...
+        && ~(isfield(public_vars, 'replan_path') && public_vars.replan_path)
+    path = public_vars.path;
+    raw_path = path;
     return;
 end
 
-if is_outdoor_1_map(read_only_vars.map)
-    % Task5/Task1: handcrafted trajectory from [2,2] to [16,2].
-    path = create_task5_task1_path();
+planner_mode = 'astar';
+if isfield(public_vars, 'path_planner_mode') && ~isempty(public_vars.path_planner_mode)
+    planner_mode = lower(string(public_vars.path_planner_mode));
+end
+
+planner_public = public_vars;
+planner_public.path_clearance_m = get_planner_clearance_or(public_vars, 0.25);
+raw_path = run_planner(planner_mode, read_only_vars, planner_public);
+
+if isempty(raw_path) || size(raw_path, 1) < 2
+    fallback_clearances = [0.20, 0.16, 0.12];
+    base_clearance = get_planner_clearance_or(public_vars, 0.25);
+    for i = 1:numel(fallback_clearances)
+        c_try = fallback_clearances(i);
+        if c_try >= base_clearance - 1e-6
+            continue;
+        end
+        tmp_public = public_vars;
+        tmp_public.path_clearance_m = c_try;
+        raw_path = run_planner(planner_mode, read_only_vars, tmp_public);
+        if ~isempty(raw_path) && size(raw_path, 1) >= 2
+            break;
+        end
+    end
+end
+
+smooth_public = public_vars;
+smooth_public.path_clearance_m = get_tracking_clearance_or(public_vars, get_planner_clearance_or(public_vars, 0.25));
+path = choose_best_smoothed_path(raw_path, read_only_vars, smooth_public);
+
+end
+
+function raw_path = run_planner(planner_mode, read_only_vars, public_vars)
+switch planner_mode
+    case "astar"
+        raw_path = astar(read_only_vars, public_vars);
+    case "dijkstra"
+        raw_path = dijkstra(read_only_vars, public_vars);
+    case "greedy"
+        raw_path = greedy_best_first(read_only_vars, public_vars);
+    otherwise
+        raw_path = astar(read_only_vars, public_vars);
+end
+end
+
+function value = get_planner_clearance_or(public_vars, fallback)
+if isfield(public_vars, 'planner_clearance_m') && isfinite(public_vars.planner_clearance_m)
+    value = public_vars.planner_clearance_m;
+elseif isfield(public_vars, 'path_clearance_m') && isfinite(public_vars.path_clearance_m)
+    value = public_vars.path_clearance_m;
+else
+    value = fallback;
+end
+end
+
+function value = get_tracking_clearance_or(public_vars, fallback)
+if isfield(public_vars, 'tracking_clearance_m') && isfinite(public_vars.tracking_clearance_m)
+    value = public_vars.tracking_clearance_m;
+elseif isfield(public_vars, 'path_clearance_m') && isfinite(public_vars.path_clearance_m)
+    value = public_vars.path_clearance_m;
+else
+    value = fallback;
+end
+end
+
+function best_path = choose_best_smoothed_path(raw_path, read_only_vars, public_vars)
+best_path = smooth_path(raw_path, read_only_vars, public_vars);
+best_score = local_path_quality_score(best_path, raw_path, read_only_vars, public_vars);
+if ~isfinite(best_score)
+    best_score = -inf;
+end
+
+if best_score >= 0.60 || isempty(raw_path) || size(raw_path, 1) < 3
     return;
 end
 
-path = astar(read_only_vars, public_vars);
-path = smooth_path(path);
+candidates = {};
+candidates{end + 1} = raw_path; %#ok<AGROW>
+if isfield(public_vars, 'path_smoothing_mode') && ~strcmpi(string(public_vars.path_smoothing_mode), "chaikin")
+    tmp = public_vars;
+    tmp.path_smoothing_mode = 'chaikin';
+    candidates{end + 1} = smooth_path(raw_path, read_only_vars, tmp); %#ok<AGROW>
+end
+tmp = public_vars;
+tmp.smooth_chaikin_iters = getfield_or(tmp, 'smooth_chaikin_iters', 3) + 1;
+tmp.path_smoothing_mode = 'chaikin';
+candidates{end + 1} = smooth_path(raw_path, read_only_vars, tmp); %#ok<AGROW>
+tmp = public_vars;
+tmp.path_smoothing_mode = 'iterative';
+candidates{end + 1} = smooth_path(raw_path, read_only_vars, tmp); %#ok<AGROW>
+tmp = public_vars;
+tmp.path_smoothing_mode = 'shortcut';
+candidates{end + 1} = smooth_path(raw_path, read_only_vars, tmp); %#ok<AGROW>
 
+for i = 1:numel(candidates)
+    cand = candidates{i};
+    cand_score = local_path_quality_score(cand, raw_path, read_only_vars, public_vars);
+    if cand_score > best_score + 1e-6
+        best_path = cand;
+        best_score = cand_score;
+    end
+end
 end
 
-function tf = is_indoor_1_map(map)
-tf = isequal(size(map.walls), [6, 4]) ...
-    && isequal(round(map.goal, 6), [9, 9]) ...
-    && isequal(round(map.limits, 6), [0, 0, 10, 10]);
+function score = local_path_quality_score(path, raw_path, read_only_vars, public_vars)
+score = -inf;
+if isempty(path) || size(path, 1) < 2
+    return;
 end
 
-function tf = is_outdoor_1_map(map)
-tf = isequal(size(map.walls), [15, 4]) ...
-    && isequal(round(map.goal, 6), [16, 2]) ...
-    && isequal(round(map.limits, 6), [0, 0, 20, 15]);
+walls = [];
+if isfield(read_only_vars, 'map') && isfield(read_only_vars.map, 'walls')
+    walls = read_only_vars.map.walls;
+end
+clearance_target = get_tracking_clearance_or(public_vars, 0.25);
+min_clear = inf;
+if ~isempty(walls)
+    min_clear = path_min_clearance_local(path, walls, 0.03);
+    if ~isfinite(min_clear) || min_clear < clearance_target - 1e-6
+        return;
+    end
 end
 
-function path = create_task3_task2_path()
-% Start point required by assignment
-% From (2, 8.5) to goal (9, 9), includes curved segments.
+seg = diff(path(:, 1:2), 1, 1);
+seg_len = vecnorm(seg, 2, 2);
+angles = atan2(seg(:, 2), seg(:, 1));
+max_turn = 0;
+turn_density = 0;
+if numel(angles) >= 2
+    dtheta = abs(mod(diff(angles) + pi, 2 * pi) - pi);
+    max_turn = max(dtheta) * 180 / pi;
+    turn_density = sum(dtheta) / max(sum(seg_len), 1e-6);
+end
+raw_len = sum(vecnorm(diff(raw_path(:, 1:2), 1, 1), 2, 2));
+path_len = sum(seg_len);
+length_ratio = path_len / max(raw_len, 1e-6);
 
-path = [];
-
-% 1) Curved segment (Bezier) above the first vertical wall (x=3.3, y<=7)
-t = linspace(0, 1, 50)';
-P0 = [2.0, 8.5];
-P1 = [2.8, 9.2];
-P2 = [3.6, 8.8];
-P3 = [4.2, 7.9];
-bezier = (1 - t).^3 .* P0 + ...
-    3 * (1 - t).^2 .* t .* P1 + ...
-    3 * (1 - t) .* t.^2 .* P2 + ...
-    t.^3 .* P3;
-path = [path; bezier];
-
-% 2) Straight descent on the right side of the first wall
-y2 = linspace(7.9, 2.2, 55)';
-path = [path; [4.2 * ones(numel(y2), 1), y2]];
-
-% 3) Curved low corridor below the second wall endpoint (x=7.2, y=3)
-x3 = linspace(4.2, 8.6, 80)';
-y3 = 2.2 + 0.3 * sin(2 * pi * (x3 - 4.2) / (8.6 - 4.2));
-path = [path; [x3, y3]];
-
-% 4) Circular arc for smooth heading change before final climb
-theta = linspace(-pi/2, 0, 24)';
-x4 = 8.6 + 0.8 * cos(theta);
-y4 = 3.0 + 0.8 * sin(theta);
-path = [path; [x4, y4]];
-
-% 5) Final ascent to goal
-x5 = linspace(9.4, 9.0, 70)';
-y5 = linspace(3.0, 9.0, 70)';
-path = [path; [x5, y5]];
-
-% Ensure exact goal as the last waypoint.
-path(end, :) = [9, 9];
+score = 1.0 ...
+    - 0.48 * max(0, 1 - min_clear / max(clearance_target, 1e-6)) ...
+    - 0.28 * max(0, (max_turn - 42) / 70) ...
+    - 0.16 * max(0, (turn_density - 0.42) / 0.70) ...
+    - 0.16 * max(0, length_ratio - 1.08);
 end
 
-function path = create_task5_task1_path()
-% Task5/Task1: manual trajectory for outdoor_1
-% Start [2,2] -> Goal [16,2], includes curved segments.
+function value = getfield_or(s, field_name, fallback)
+if isstruct(s) && isfield(s, field_name) && ~isempty(s.(field_name))
+    value = s.(field_name);
+else
+    value = fallback;
+end
+end
 
-path = [];
+function dmin = path_min_clearance_local(path, walls, ds)
+if nargin < 3
+    ds = 0.03;
+end
+pts = sample_path_local(path, ds);
+dmin = inf;
+for i = 1:size(pts, 1)
+    pi = pts(i, :);
+    for w = 1:size(walls, 1)
+        d = point_to_segment_distance_local(pi, walls(w, 1:2), walls(w, 3:4));
+        if d < dmin
+            dmin = d;
+        end
+    end
+end
+end
 
-% 1) Vertical segment up from start.
-y1 = linspace(2, 8, 55)';
-path = [path; [2 * ones(numel(y1), 1), y1]];
+function pts = sample_path_local(path, ds)
+pts = path(1, :);
+for i = 1:(size(path, 1) - 1)
+    seg = sample_segment_local(path(i, :), path(i + 1, :), ds);
+    if i > 1
+        seg(1, :) = [];
+    end
+    pts = [pts; seg]; %#ok<AGROW>
+end
+end
 
-% 2) Curved horizontal traverse in upper corridor.
-x2 = linspace(2, 11, 90)';
-y2 = 8 + 0.6 * sin(2 * pi * (x2 - 2) / (11 - 2));
-path = [path; [x2, y2]];
+function pts = sample_segment_local(a, b, ds)
+L = norm(b - a);
+if L < 1e-12
+    pts = a;
+    return;
+end
+n = max(2, ceil(L / max(ds, 1e-3)) + 1);
+t = linspace(0, 1, n)';
+pts = (1 - t) .* a + t .* b;
+end
 
-% 3) Smooth bezier descent to goal.
-t = linspace(0, 1, 85)';
-P0 = [11, 8];
-P1 = [13, 8.2];
-P2 = [15, 4.4];
-P3 = [16, 2];
-bezier = (1 - t).^3 .* P0 + ...
-    3 * (1 - t).^2 .* t .* P1 + ...
-    3 * (1 - t) .* t.^2 .* P2 + ...
-    t.^3 .* P3;
-path = [path; bezier];
-
-path(1, :) = [2, 2];
-path(end, :) = [16, 2];
+function d = point_to_segment_distance_local(p, a, b)
+ab = b - a;
+den = dot(ab, ab);
+if den < 1e-12
+    d = norm(p - a);
+    return;
+end
+t = dot(p - a, ab) / den;
+t = max(0, min(1, t));
+proj = a + t * ab;
+d = norm(p - proj);
 end
 
