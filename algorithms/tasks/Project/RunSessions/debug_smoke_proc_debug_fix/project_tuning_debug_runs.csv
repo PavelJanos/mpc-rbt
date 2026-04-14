@@ -1,0 +1,3 @@
+map_name,repeat_id,status,steps,goal_error_m,travelled_m,runtime_s,session_subdir
+indoor_1,1,worker_error,NaN,Inf,NaN,NaN,C:\Users\pavell\Desktop\Map\MPC-MAP-Student-main\MPC-MAP-Student-main\algorithms\tasks\Project\RunSessions\debug_proc_indoor_1_r01_01_814724
+indoor_1,2,worker_error,NaN,Inf,NaN,NaN,C:\Users\pavell\Desktop\Map\MPC-MAP-Student-main\MPC-MAP-Student-main\algorithms\tasks\Project\RunSessions\debug_proc_indoor_1_r02_02_905792

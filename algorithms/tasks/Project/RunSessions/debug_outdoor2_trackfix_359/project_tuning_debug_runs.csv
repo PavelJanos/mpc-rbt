@@ -1,0 +1,4 @@
+map_name,repeat_id,status,steps,goal_error_m,travelled_m,runtime_s,session_subdir
+outdoor_2,3,goal,1170,0.496608561773529,23.6889022680741,105.7696496,C:\Users\pavell\Desktop\Map\MPC-MAP-Student-main\MPC-MAP-Student-main\algorithms\tasks\Project\RunSessions\debug_proc_outdoor_2_r03_01_814724\outdoor_2_run_03
+outdoor_2,5,wall,1765,12.6659123519651,22.7935075267258,525.5749677,C:\Users\pavell\Desktop\Map\MPC-MAP-Student-main\MPC-MAP-Student-main\algorithms\tasks\Project\RunSessions\debug_proc_outdoor_2_r05_02_905792\outdoor_2_run_05
+outdoor_2,9,timeout,2050,4.86419149749638,22.7401168899808,751.3415706,C:\Users\pavell\Desktop\Map\MPC-MAP-Student-main\MPC-MAP-Student-main\algorithms\tasks\Project\RunSessions\debug_proc_outdoor_2_r09_03_126987\outdoor_2_run_09

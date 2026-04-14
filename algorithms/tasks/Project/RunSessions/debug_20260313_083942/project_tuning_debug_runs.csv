@@ -1,0 +1,2 @@
+map_name,repeat_id,status,steps,goal_error_m,travelled_m,runtime_s,session_subdir
+indoor_1,1,goal,1694,0.493106497219349,27.9282331827032,77.6814914,C:\Users\pavell\Desktop\Map\MPC-MAP-Student-main\MPC-MAP-Student-main\algorithms\tasks\Project\RunSessions\debug_20260313_083942\indoor_1_run_01

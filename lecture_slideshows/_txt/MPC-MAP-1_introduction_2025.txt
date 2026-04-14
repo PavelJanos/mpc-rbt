@@ -1,0 +1,683 @@
+1 – Introduction
+Advanced Methods for Mapping and Self-localization in Robotics
+MPC-MAP
+
+
+
+
+Petr Gabrlik
+Brno University of Technology
+2025
+                                                1 – Introduction
+                                                              2
+
+
+
+
+             Motivation
+The current use of (autonomous) mobile robots
+                                                                                1 – Introduction
+   Motivation
+                                                                                                 3
+
+
+
+
+Robot Vacuums                                            Source: iRobot
+
+
+
+▪ A widely used type of a consumer-grade robot
+
+▪ Both dump and high-tech solutions
+
+▪ Environment: indoor, 2D, uncontrolled
+
+▪ Task / navigation goal: area coverage
+
+▪ Localization: none, encoders, IMU, LiDAR SLAM
+
+▪ Perception: tactile sensors, cameras, LiDAR etc.
+
+
+
+
+                                                     Source: reoverview.co.uk      Source: digitaltrends.com
+                                                               1 – Introduction
+   Motivation
+                                                                             4
+
+
+
+
+Robotic Lawn Mower
+▪ A similar task as a vacuum cleaner
+
+▪ Both dump and high-tech solutions
+
+▪ Environment: outdoor, 3D, partially
+  controlled/uncontrolled
+
+▪ Task / navigation goal: area coverage
+
+▪ Localization: none, encoders, IMU, GNSS
+
+▪ Perception: tactile sensors, cameras, LiDAR etc.
+                                                     Source: wsj.com
+                                                                                  1 – Introduction
+   Motivation
+                                                                                                       5
+
+
+
+
+Warehouse Robots
+▪ Robotic picker, pallet trucks, goods-to-person
+
+▪ Environment: indoor, 2D, controlled/uncontrolled
+
+▪ Task / navigation goal: go to location
+
+▪ Localization: encoders, IMU, LiDAR-based
+  localization in map, indoor localization systems
+  (MoCap, UWB, fiducial markers etc.)                Source: ep-equipment.com
+
+
+▪ Perception: cameras, depth-cameras, LiDARs etc.
+
+
+
+
+                                                                                Source: theverge.com
+                                                                                           1 – Introduction
+   Motivation
+                                                                                                             6
+
+
+
+
+                                                                Source: kvados.cz
+
+Food Delivery Robots
+▪ A robotic replacement for waiters
+
+▪ Environment: indoor, 2D, uncontrolled
+
+▪ Task / navigation goal: go to location
+
+▪ Localization: encoders, IMU, LiDAR-based localization in
+  map, LiDAR SLAM
+
+▪ Perception: tactile sensors, cameras, depth-cameras, LiDARs
+  etc.
+
+
+
+
+                                                                                    Source: globaltimes.cn
+                                                                                         1 – Introduction
+   Motivation
+                                                                                                             7
+
+
+
+
+                                                             Source: cbc.ca
+
+Cleaning Robots
+▪ Floor cleaning, UV disinfection
+
+▪ Environment: indoor, 2D, uncontrolled
+
+▪ Task / navigation goal: area coverage, go to location
+
+▪ Localization: encoders, IMU, LiDAR-based localization in
+  map, LiDAR SLAM
+
+▪ Perception: tactile sensors, cameras, depth-cameras,
+  LiDARs etc.
+
+
+
+
+                                                                              Source: healthcareitnews.com
+                                                                                    1 – Introduction
+   Motivation
+                                                                                                    8
+
+
+
+
+                                                                                 Source: idnes.cz
+Agricultural robots
+▪ Seeding, harvesting, crop maintenance etc.
+
+▪ Environment: outdoor/indoor, 3D, partially
+  controlled/uncontrolled
+
+▪ Task / navigation goal: go to location, area coverage,
+  linear trajectories
+
+▪ Localization: encoders, IMU, GNSS, indoor localization
+  systems, LiDAR-based localization in map, LiDAR SLAM
+
+▪ Perception: cameras, depth-cameras, LiDARs
+
+
+
+                                                           Source: latimes.com
+                                                                                     1 – Introduction
+   Motivation
+                                                                                                        9
+
+
+
+
+Last-Mile Delivery Robots
+▪ Delivering goods to customers
+
+▪ Operates mainly on the pavements
+
+▪ Environment: outdoor, 3D, uncontrolled
+
+▪ Task / navigation goal: go to location
+
+▪ Localization: encoders, IMU, GNSS                 Source: freightwaves.com
+
+
+▪ Perception: cameras, depth-cameras, LiDARs etc.
+
+
+
+
+                                                                               Source: cambridgeindependent.co.uk
+                                                                                   1 – Introduction
+   Motivation
+                                                                                                10
+
+
+
+
+                                                       Source: marketwatch.com
+Self-Driving Cars
+▪ Comprehensive task with human health risks
+
+▪ Environment: outdoor, 3D, uncontrolled
+
+▪ Task / navigation goal: go to location
+
+▪ Localization: encoders, IMU, GNSS
+
+▪ Perception: cameras, depth-cameras, LiDARs, radars
+
+
+
+
+                                                                           Source: waymo.com
+                                                     1 – Introduction
+                                                                  11
+
+
+
+
+       Problem Specification
+Fundamental problems in autonomous mobile robotics
+                                                                                           1 – Introduction
+Problem Specification
+                                                                                                        12
+
+
+
+                                                      Path planning
+           Localization                                                                    Mapping
+                                                      How to get to
+          Where am I?                               the destination?                    How does the
+                                                                                        environment
+                                                                                         look like?
+
+
+
+
+                                           Go from A to B
+
+
+                                                                       How to avoid
+                          How to follow                                 obstacles?
+                           the path?
+
+                                                                       Perception and
+                          Motion control                               local planning
+                                                                       1 – Introduction
+Concepts
+                                                                                    13
+
+
+
+
+                                  Environment
+
+
+
+
+           Motion control                               Perception
+
+
+                            Navigation with known map
+
+
+           Path planning                                Localization
+
+
+
+ Map
+                                                                     1 – Introduction
+Concepts
+                                                                                  14
+
+
+
+
+                                 Environment
+
+
+
+
+           Motion control                             Perception
+
+
+                            Navigation without map
+
+
+           Path planning                              Localization
+
+                                               SLAM
+
+                                  Mapping
+                                             1 – Introduction
+                                                          15
+
+
+
+
+       Course Details
+The goals, lecturers, structure, resources
+                                                                                                  1 – Introduction
+  About
+                                                                                                               16
+
+
+
+
+▪ Motivation and goals
+    ▪ Diving into the fundamental problems of mobile robotics.
+    ▪ Understand robot navigation: self-localization, path planning, motion control and map building topics.
+    ▪ Algorithm-focused course (no complex SW, no HW/robot, no communication..).
+    ▪ Practice theory via practical tasks in the simulator.
+
+
+
+▪ Course parameters
+    ▪ 3 credits (ECTS), ended with classified credit
+    ▪ Total work: 72 hrs. (~24 hrs./credit)
+    ▪ Lectures: 7 × 2 hrs. (optional, highly recommended)
+    ▪ Labs: 7 × 2 hrs., weekly assignments – individual homework with consultations during lab hours (compulsory)
+    ▪ Total individual homework: 58 hrs., ~ 9 hrs./week (weekly projects, semestral project, self-study)
+                                                                              1 – Introduction
+  Lecturers
+                                                                                           17
+
+
+
+
+▪ Course supervisor
+   ▪ Ing. Petr Gábrlík, Ph.D.
+
+▪ Lecturers
+
+                     Ing. Petr Gábrlík, Ph.D.     Ing. Tomáš Lázna, Ph.D.
+                          gabrlik@vut.cz        tomas.lazna@ceitec.vutbr.cz
+                            SE1. 112                      SE 1.112
+                                                                                 1 – Introduction
+Course Structure
+                                                                                              18
+
+
+
+
+                                                                       Lab
+  Week   Lecture                         Lab                                   Lecturer
+                                                                      points
+
+    1    Introduction                    Robot navigation demo          0      Gabrlik
+
+    2    Probabilistics Robotics         Uncertainty                   10      Gabrlik
+
+    3    Kinematics and Motion Control   Motion Control                10       Lazna
+
+    4    Particle Filter                 Particle Filter               10       Lazna
+
+    5    Kalman Filter and EKF           Kalman Filter and EKF         10      Gabrlik
+
+    6    Path Planning                   Path planning                 10       Lazna
+
+    7    SLAM                            Individual work on project    50      Gabrlik
+                                                                   1 – Introduction
+   Week 2: Probabilistics Robotics
+                                                                                19
+
+
+
+
+▪ Introduction to basic statistics and
+  probability
+
+▪ Normal distribution
+
+▪ Covariance matrix
+                                         Source: wikipedia.org
+▪ Bayes theorem
+
+▪ Markov localization
+
+▪ Basic sensors
+
+
+
+
+                                           Source: wikipedia.org
+                                                                                                                                                                                              1 – Introduction
+                    Week 3: Kinematics and Motion Control
+                                                                                                                                                                                                                  20
+
+
+
+
+               ▪ Kinematics of a differential drive
+
+               ▪ Motion model
+
+               ▪ How to follow a path?
+
+                                                                                                                                                                [3]
+
+
+
+
+                                                                                                                                                               [2]
+                                                           [1]
+1. [1] HAN, Soonshin, ByoungSuk CHOI a JangMyung LEE. A precise curved motion planning for a differential driving mobile robot. Mechatronics [online]. 2008, 18(9), 486-494 [cit. 2022-02-04]. DOI:
+   10.1016/j.mechatronics.2008.04.001
+2. [2] FOSSEN, Thor I. a Anastasios M. LEKKAS. Direct and indirect adaptive integral line-of-sight path-following controllers for marine craft exposed to ocean currents. International Journal of Adaptive Control and Signal Processing
+   [online]. 2017, 31(4), 445-463 [cit. 2022-02-04]. DOI: 10.1002/acs.2550
+3. https://www.turtlebot.com/
+                                                                                                                                                                                                     1 – Introduction
+                     Week 4: Particle Filter (localization)
+                                                                                                                                                                                                                         21
+
+
+
+
+               ▪ Introduction to Monte Carlo methods
+
+               ▪ What are particles?
+
+               ▪ Random numbers sampling – a vital element
+
+               ▪ Particle filter algorithm – 3 steps:
+                         ▪ Prediction
+                         ▪ Correction                                                                                                                                                   [1]
+                         ▪ Resampling
+
+               ▪ Application of the PF to the localization
+                 problem
+
+               ▪ Typical issues and how to solve them
+
+
+                                                                                                                                                                                               [2]
+[1] TRIEBEL, Rudolph. The Particle Filter. In: Machine Learning for Computer Vision [online]. Technische Universität München, 2017 [cit. 2021-02-19]. Available
+at:https://vision.in.tum.de/_media/teaching/ss2017/ml4cv/variationalinference.pdf
+[2] STACHNISS, Cyrill. Short Introduction to Particle Filters and Monte Carlo Localization [online]. Uni Freiburg, 2013 [cit. 2021-02-18]. Available at: http://ais.informatik.uni-freiburg.de/teaching/ws13/mapping/pdf/slam10-particle-filter-
+4.pdf
+                                                                                                                                                                                              1 – Introduction
+                     Week 5: Kalman Filter and EKF (localization)
+                                                                                                                                                                                                                  22
+
+
+
+
+                   ▪ An algorithm for filtering and prediction in linear
+                        systems / estimating unknown variables.
+                   ▪ Suitable for fusing data from different sensors
+                        (different variables and sampling periods).
+
+                                                                                                                                                                               [2]
+                   ▪ Used for trajectory estimation for the Apollo
+                        program in the ~1960s – one of the very first
+                        applications of the Kalman filter [1].
+                            ▪    Combination of acceleration data and star position
+                                 observation.
+
+                                                                                                                                                                                [3]
+
+
+
+[1] GREWAL, M. S. and ANDREWS, A. P., 2010. Applications of Kalman Filtering in Aerospace 1960 to the Present [Historical Perspectives]. IEEE Control Systems Magazine. June 2010. Vol. 30, no. 3, p. 69–78.
+DOI 10.1109/MCS.2010.936465.
+[2] Apollo command and service module, 2021. Wikipedia [online]. [Accessed 4 March 2021]. Available from: https://en.wikipedia.org/wiki/Apollo_command_and_service_module
+[3] Implementations of Kalman Filter From Aerospace to Industry. P2 SMTP LIPI [online]. 2018 [cit. 2021-01-18]. Available at: http://smtp.lipi.go.id/berita633-Implementations-of-Kalman-Filter-From-Aerospace-to-Industry.html
+                                                                                                                                                                                             1 – Introduction
+                    Week 6: Path Planning
+                                                                                                                                                                                                                 23
+
+
+
+
+               ▪ Configuration space
+
+               ▪ Types of planners
+
+               ▪ Workspace representation
+
+               ▪ Graph-search algorithms: Dijsktra, A*, …
+
+               ▪ Avoiding obstacles
+                                                                                                                                                                             [1]
+               ▪ Path smoothing
+
+
+
+
+                                                                                                                                                                             [2]
+
+
+[1] DAHDOUH, Andrew. Graph-Based Path Planning: Dijkstra’s Algorithm. In: Reality Bytes [online] 2017 [cit. 2021-02-26]. Available at: https://realitybytes.blog/2017/07/11/graph-based-path-planning-dijkstras-algorithm/
+[2] Dijkstra’s shortest path algorithm | Greedy Algo-7. In: GeeksforGeeks [online]. 2020 [cit. 2021-02-28]. Available at: https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-greedy-algo-7/
+                                                                                                                                 1 – Introduction
+                   Week 7: SLAM
+                                                                                                                                              24
+
+
+
+
+                                                                                                     Particles-Based
+              ▪ Simultaneous localization and mapping                                                     SLAM
+                                                                                                                       Graph-Based
+              ▪ Both tasks are addressed together
+                                                                                                                          SLAM
+                                                                                                                                     Kalman-Based
+              ▪ Comprehensive algorithms                                                                                                 SLAM
+              ▪ Essential for indoor autonomous robots
+
+
+
+
+                                                                     [1]
+[1] https://sifrobot.com/wp-content/uploads/2020/03/Simultaneous-Localization-and-Mapping-SLAM.png
+                                                                        1 – Introduction
+  Weekly Assignments (Labs)
+                                                                                     25
+
+
+
+
+▪ Weekly assignments in the weeks 2 to 6
+▪ Task assignments available on the GitHub
+
+▪ For each assignment you will prepare short,
+  single A4 report describing your solution
+▪ Each assignment task is documented via a
+  few sentences and image(s) (if applicable)
+▪ The deadline is next Wednesday 23:59
+
+▪ During the week you can consult your solution
+  with lecturers
+▪ 0 to 10 points per assignment                   Assignment (GitHub)       Report (pdf)
+                                                                                                                                                                   1 – Introduction
+                   Study Resources
+                                                                                                                                                                                26
+
+
+
+
+              ▪ Lectures
+
+              ▪ Labs / Consultations
+
+              ▪ GitHub repository: https://github.com/Robotics-BUT/MPC-MAP-Student
+
+              ▪ Sebastian Thrun: Probabilistic Robotics* (Book) [1]
+
+              ▪ Sebastian Thrun: Artificial Intelligence for Robotics (Udacity course)
+
+
+
+
+                                                                                                                                                             [1]
+
+
+
+
+[1] THRUN, Sebastian, BURGARD, Wolfram and FOX, Dieter, 2005. Probabilistic Robotics. 1st edition. Cambridge, Mass: The MIT Press. ISBN 978-0-262-20162-9.
+* An early book version is available online, the hardcover is available in the FEEC BUT library.
+                                            1 – Introduction
+                                                         27
+
+
+
+
+            Simulator
+Lightweight, MATLAB-based robot simulator
+                                                                                         1 – Introduction
+   Simulator
+                                                                                                      28
+
+
+
+
+▪ Both the weekly assignments and the semestral project are
+  implemented in MATLAB
+
+▪ Custom-build, lightweight robot simulator
+
+▪ The robot (the blue arrow) is controlled via linear/angular speed
+
+▪ Two sensors available: 8-way lidar, GNSS receiver
+
+▪ The goal is to navigate the robot to the goal location
+
+▪ Robot can not hit the walls and leave the map
+
+▪ Numerous maps are available
+
+▪ A simulation loop is prepared to be filled with your custom
+  functions for localization, path planning, motion control etc.
+
+▪ The simulator is available on GitHub                                The simulation visualization
+            1 – Introduction
+Simulator
+                         29
+                                                             1 – Introduction
+                                                                          30
+
+
+
+
+             Semestral Project
+The final project addressing a complete navigation problem
+                                                                        1 – Introduction
+  Semestral Project – Goals
+                                                                                     31
+
+
+
+
+▪ The semestral project connects all the functions prepared within
+  weekly assignments together
+▪ The goal is to navigate the robot to the goal location:
+    ▪ With the minimal number of iterations
+    ▪ For diverse maps (incl. indoor, outdoor, combined)
+    ▪ For different start poses and goal locations
+    ▪ Without hitting walls and leaving the map
+
+
+
+▪ A detailed semestral project assignment will be available on GitHub
+  during the semester
+                                                                             1 – Introduction
+  Semestral Project – Evaluation
+                                                                                          32
+
+
+
+
+▪ The project deadline: 8th week of the semester, Sunday 23:59
+▪ Your solutions will be tested and evaluated by repeated runs with
+  different simulator settings (up to 100 runs)
+
+▪ The solution (code quality, algorithms, ideas) will be evaluated as well
+
+
+▪ Scoring – up to 50 points:
+    ▪ Reaching goal probability: 0 to 15 points
+    ▪ Number of iterations: 0 to 15 points
+    ▪ Technical solution: 0 to 20 points
+                                                       1 – Introduction
+                                                                    33
+
+
+
+
+        Live Demonstration
+A live demo illustrating the concepts and algorithms
+                                                               1 – Introduction
+  Live Demonstration
+                                                                            34
+
+
+
+
+▪ Loki mobile robot
+    ▪ Custom build platform for the research and development
+    ▪ Differential drive
+    ▪ ROS2 based, incl. Nav2 stack
+    ▪ Sensors: encoders (odometry), 3D LiDAR, MoCap, IMU
+                                                      1 – Introduction
+                                                                   35
+
+
+
+
+                 Petr Gabrlik
+                   gabrlik@vut.cz
+
+
+            Brno University of Technology
+Faculty of Electrical Engineering and Communication
+    Department of Control and Instrumentation
+
+
+
+
+            Robotics and AI Research Group
+

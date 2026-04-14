@@ -1,0 +1,4 @@
+map_name,status,goal_error_m,travelled_m,runtime_s,dominant_state,dominant_limiter,dominant_replan,dominant_relocalize,mean_track_speed_mps,mean_track_path_distance_m
+indoor_1,goal,0.492,21.187,24.845,track,none,none,none,0.333122546154864,0.29030582212555
+indoor_2,goal,0.49,28.866,44.664,track,none,none,none,0.304792700495327,0.306458721600663
+outdoor_1,goal,0.499,25.166,58.507,track,none,none,none,0.294098067878166,0.144632557874215

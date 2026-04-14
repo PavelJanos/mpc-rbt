@@ -1,0 +1,3 @@
+map_name,repeat_id,status,steps,goal_error_m,travelled_m,runtime_s,session_subdir
+indoor_1,1,timeout,60,11.8859431847233,0.667282438931978,4.3026821,C:\Users\pavell\Desktop\Map\MPC-MAP-Student-main\MPC-MAP-Student-main\algorithms\tasks\Project\RunSessions\debug_smoke_debug_02\indoor_1_run_01
+indoor_2,1,timeout,60,9.1399120196854,0.175520890367011,6.0799095,C:\Users\pavell\Desktop\Map\MPC-MAP-Student-main\MPC-MAP-Student-main\algorithms\tasks\Project\RunSessions\debug_smoke_debug_02\indoor_2_run_01

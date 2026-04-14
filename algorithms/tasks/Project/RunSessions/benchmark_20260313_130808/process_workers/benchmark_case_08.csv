@@ -1,0 +1,2 @@
+map_name,repeat_id,start_x,start_y,start_theta,goal_x,goal_y,max_vel,cases_mode
+indoor_2,8,7,2.8,-2.27444822013269,2.8,5.8,1,reuse

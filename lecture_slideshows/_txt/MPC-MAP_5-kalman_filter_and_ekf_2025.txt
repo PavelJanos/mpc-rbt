@@ -1,0 +1,732 @@
+5 – Kalman Filter and EKF
+Advanced Methods for Mapping and Self-localization in Robotics
+MPC-MAP
+
+
+
+
+Petr Gabrlik
+Brno University of Technology
+2025
+                                                                                                                                                            5 – Kalman Filter and EKF
+                   Probabilistic Robotics Book
+                                                                                                                                                                                   2
+
+
+
+
+              ▪ The materials presented herein are mainly based on the
+                Probabilistic Robotics book by Sebastian Thrun et al. [1]
+              ▪ This presentation contains equations and graphics from the
+                book; some images are adopted from the slides available at
+                probabilistic-robotics.org.
+
+
+
+                                                                                                                                                               [1]
+
+
+
+
+1. THRUN, Sebastian, BURGARD, Wolfram and FOX, Dieter, 2005. Probabilistic Robotics. 1st edition. Cambridge, Mass: The MIT Press. ISBN 978-0-262-20162-9.
+                                                                   5 – Kalman Filter and EKF
+  Introduction
+                                                                                          3
+
+
+
+
+Kalman Filter
+▪ An algorithm for filtering and prediction in                    Bayes Filters
+  linear systems / estimating unknown
+  variables.
+▪ Gaussian filter, an early implementation of          Gaussian                   Monte Carlo
+                                                        Filters                     Filters
+  Bayes filter for continuous space.
+▪ The best studied technique for Bayes filters.
+▪ Widely used and popular technique to date.      KF     EKF      UKF          PF
+                                                                                                                                                                       5 – Kalman Filter and EKF
+                    History
+                                                                                                                                                                                                             4
+
+
+
+
+              Kalman filter
+              ▪ Developed and introduced in ~1950s.
+              ▪ Named after Rudolf E. Kálmán, Hungarian-American
+                engineer/mathematician.
+              ▪ Similar algorithm developer by other researchers that time.
+              ▪ First described by technical papers by Swerling (1958), Kalman
+                                                                                                                                                                  Rudolf E. Kálmán (1930 – 2016)
+                (1960) [1] and Kalman and Bucy (1961).                                                                                                                            [2]
+
+
+
+
+1. KALMAN, Rudolph Emil, 1960. A New Approach to Linear Filtering and Prediction Problems. Transactions of the ASME – Journal of Basic Engineering. 1960. Vol. 82, no. Series D, p. 35–45. Available from:
+   https://www.cs.unc.edu/~welch/kalman/media/pdf/Kalman1960.pdf
+2. Rudolf E. Kálmán, 2021. Wikipedia [online]. [Accessed 4 March 2021]. Available from: https://en.wikipedia.org/w/index.php?title=Rudolf_E._K%C3%A1lm%C3%A1n&oldid=1001450066
+                                                                                                                                                                           5 – Kalman Filter and EKF
+                    Applications
+                                                                                                                                                                                                                  5
+
+
+
+
+               Apollo program
+               ▪ Used for trajectory estimation for the Apollo
+                 program in the ~1960s [1].
+               ▪ One of the very first applications of the Kalman
+                 filter.
+               ▪ EKF due to system nonlinearities.
+                                                                                                                                                                                [2]
+               ▪ Sensors:
+                        ▪ Accelerometers for thrusting periods.
+                        ▪ Optical sextant (sparse measurements)
+               ▪ Implemented at onboard computer:
+                        ▪ 2k of magnetic core RAM,
+                        ▪ 36k wire rope (ROM) memory,
+                        ▪ CPU built from ICs, clock <100 kHz.                                                                                                                   [3]
+
+
+
+1. GREWAL, M. S. and ANDREWS, A. P., 2010. Applications of Kalman Filtering in Aerospace 1960 to the Present [Historical Perspectives]. IEEE Control Systems Magazine. June 2010. Vol. 30, no. 3, p. 69–78.
+   DOI 10.1109/MCS.2010.936465.
+2. Apollo command and service module, 2021. Wikipedia [online]. [Accessed 4 March 2021]. Available from: https://en.wikipedia.org/wiki/Apollo_command_and_service_module
+3. Implementations of Kalman Filter From Aerospace to Industry. P2 SMTP LIPI [online]. 2018 [cit. 2021-01-18]. Available at: http://smtp.lipi.go.id/berita633-Implementations-of-Kalman-Filter-From-Aerospace-to-Industry.html
+                                                                                                                                                                5 – Kalman Filter and EKF
+                   Applications
+                                                                                                                                                                                                    6
+
+
+
+
+              Robotics
+              ▪ Tracking problems - the belief represents the estimate of the true state with a small uncertainty (unimodal).
+
+              ▪ Data fusion:
+                      ▪   AHRS/INS – accelerometer, gyroscopes, magnetometers, barometer, GNSS.
+                      ▪   Robot local localization – odometry + fiducial markers, GNSS, MoCap ...
+
+
+
+
+                                                                 [1]
+                                                                                                                                           [2]
+
+
+
+1. https://www.sbg-systems.com/
+2. HITZMANN, Arne, WENTSCHER, Philipp, GABEL, Alexander and GERNDT, Reinhard, 2014. Automated Testing of Workshop Robot Behavior. International Journal of Mechanical and Materials Engineering. 3 April 2014. Vol. 8,
+   no. 5, p. 732–735.
+                                                                                        5 – Kalman Filter and EKF
+   KF and PF Comparison
+                                                                                                               7
+
+
+
+
+KF (~1950s)                                         PF (mid-1990s)
+▪ Gaussian filter                                   ▪ Non-Gaussian filter
+▪ Implementation of Bayes filters                   ▪ Implementation of Bayes filters
+▪ Recursive                                         ▪ Recursive
+▪ Parametric                                        ▪ Nonparametric
+▪ Unimodal                                          ▪ Multimodal
+▪ Continuous space                                  ▪ Continuous space
+▪ Discrete time                                     ▪ Discrete time
+▪ Linear systems (EKF for nonlinear)                ▪ Linear and nonlinear systems
+▪ Analytic method                                   ▪ Numerical method (Monte Carlo)
+▪ Optimal for linear Gaussian systems               ▪ Suboptimal for linear Gaussian systems
+▪ Belief represented by multivariate norm. distr.   ▪ Belief represented by weighted set of particles
+▪ Effective on high-dimensional systems             ▪ Less effective on high-dimensional systems
+                                                                      5 – Kalman Filter and EKF
+  Bayes Filter – Belief
+                                                                                             8
+
+
+
+
+▪ Random variables possess probability density functions (PDFs).
+▪ Belief
+    ▪ Momentary state estimate (robot position, actual speed etc.).
+    ▪ Represented by PDF over the state space.
+    ▪ 𝑏𝑒𝑙 (𝑥𝑡 ) – prior belief, before observations.
+    ▪ 𝑏𝑒𝑙 (𝑥𝑡 ) – posterior belief, after observations.
+                                                                                                                                                            5 – Kalman Filter and EKF
+                   Normal Distribution
+                                                                                                                                                                                   9
+
+
+
+
+              ▪ Kalman Filter works in „Gaussian world“ – it solely uses normal distribution
+                as PDF.
+
+              ▪ One-dimensional normal distribution (𝑥 is a scalar value) is defined by
+                Gaussian function with the mean 𝜇 and variance 𝜎 2 .
+
+                                         2
+                                                                                1
+                                                                             2 −2
+                                                                                          1 (𝑥 − 𝜇)2
+                   𝑝(𝑥)~𝒩(𝑥; 𝜇, 𝜎 ):                       𝑝 𝑥 = 2𝜋𝜎                exp{−            }                                          (1)                     [1]
+                                                                                          2 𝜎2
+
+             ▪ Normal distribution over vectors is called multivariate (𝑥 is a vector); it is
+               characterized by the mean vector 𝜇 and covariance matrix Σ.
+                                                                          1      1
+                   𝑝(𝑥)~𝒩(𝑥; 𝜇, Σ):                        𝑝 𝑥 = det 2𝜋Σ −2 exp{− (𝑥 − 𝜇)𝑇 Σ −1 (𝑥 − 𝜇)}                                        (2)
+                                                                                 2
+
+
+             ▪ PDF always integrate to 1:                             න 𝑝 𝑥 𝑑𝑥 = 1                                                              (3)
+
+                                                                                                                                                                        [1]
+
+
+
+1. THRUN, Sebastian, BURGARD, Wolfram and FOX, Dieter, 2005. Probabilistic Robotics. 1st edition. Cambridge, Mass: The MIT Press. ISBN 978-0-262-20162-9.
+                                                                                                                             5 – Kalman Filter and EKF
+                    Covariance Matrix
+                                                                                                                                                   10
+
+
+
+
+               ▪ Covariance is a measure of the joint variability of two random variables.
+
+
+                   𝑐𝑜𝑣 𝑋, 𝑌 = 𝐸[(𝑋 − 𝐸[𝑋])(𝑌 − 𝐸[𝑌])]                                           𝐸 𝑋 ≈ 𝑚𝑒𝑎𝑛(𝑋)
+
+
+               ▪ Covariance matrix contains covariance between each pair of elements.
+
+               ▪ Matrix dimension: dimensionality of the state 𝑥 squared.
+
+               ▪ Key matrix properties: square, symmetric, quadratic.
+
+                      𝜎12              ⋯      𝜎1𝑛
+                   Σ=  ⋮               ⋱       ⋮
+                      𝜎𝑛1              ⋯      𝜎𝑛2
+
+
+               ▪ Main diagonal contains variances (the covariance of each element with itself).
+                                                                                                                                        [1]
+                   𝑐𝑜𝑣 𝑋, 𝑋 = 𝑣𝑎𝑟(𝑋) ≡ 𝜎                    2
+                                                                (𝑋) ≡ 𝜎𝑋2
+
+
+1. Covariance, 2021. Wikipedia [online]. [Accessed 4 March 2021]. Available from: https://en.wikipedia.org/wiki/Covariance
+                                     5 – Kalman Filter and EKF
+                                                           11
+
+
+
+
+Kalman Filter (KF)
+State estimator for linear systems
+                                                                                              5 – Kalman Filter and EKF
+  KF | Linear System Description
+                                                                                                                       12
+
+
+
+
+Linear discrete-time system (process):
+
+     𝑥𝑡 = 𝐴𝑡 𝑥𝑡−1 + 𝐵𝑡 𝑢𝑡 + 𝜀𝑡        (4)              defines the state transition probability    𝑝(𝑥𝑡 |𝑢𝑡 , 𝑥𝑡−1 )
+
+     𝑧𝑡 = 𝐶𝑡 𝑥𝑡 + 𝛿𝑡                  (5)              defines the measurement probability         𝑝(𝑧𝑡 |𝑥𝑡 )
+
+
+𝑥𝑡 , 𝑥𝑡−1    (n × 1) state vectors                                  𝑧𝑡        (k × 1) measurement vector
+𝐴𝑡           (n × n) state transition matrix                        𝐶𝑡        (k × n) measurement-state matrix
+𝑢𝑡           (m × 1) control vector                                 𝛿𝑡        (k × 1) measurement noise; Gaussian with zero
+                                                                              mean and covariance 𝑄𝑡 (k × k)
+𝐵𝑡           (n × m) control-state matrix
+𝜀𝑡           (n × 1) process noise (state transition randomness);
+             Gaussian with zero mean and covariance 𝑅𝑡 (n × n)
+                                                                                                           5 – Kalman Filter and EKF
+    KF | Linear System Description
+                                                                                                                                     13
+
+
+
+
+Linear discrete-time system (process):
+
+    𝑥𝑡 = 𝐴𝑡 𝑥𝑡−1 + 𝐵𝑡 𝑢𝑡 + 𝜀𝑡            (4)                 defines the state transition probability            𝑝(𝑥𝑡 |𝑢𝑡 , 𝑥𝑡−1 )
+
+    𝑧𝑡 = 𝐶𝑡 𝑥𝑡 + 𝛿𝑡                     (5)                  defines the measurement probability                  𝑝(𝑧𝑡 |𝑥𝑡 )
+
+
+
+▪    State transition probability is obtained by substituting (4) into multivariate norm. distr. (2), whereas 𝜇𝑡 = 𝐴𝑡 𝑥𝑡−1 + 𝐵𝑡 𝑢𝑡 and Σ𝑡 = 𝑅𝑡 :
+                                   1      1
+     𝑝(𝑥𝑡 |𝑢𝑡 , 𝑥𝑡−1 ) = det 2𝜋𝑅𝑡 −2 exp{− (𝑥𝑡 − 𝐴𝑡 𝑥𝑡−1 + 𝐵𝑡 𝑢𝑡 )𝑇 𝑅𝑡 −1 (𝑥𝑡 − 𝐴𝑡 𝑥𝑡−1 + 𝐵𝑡 𝑢𝑡 )}        (6)
+                                          2
+
+▪    Measurement probability is obtained by substituting (5) into multivariate norm. distr. (2), whereas 𝜇𝑡 = 𝐶𝑡 𝑥𝑡 and Σ𝑡 = 𝑄𝑡 :
+                            1      1
+     𝑝(𝑧𝑡 |𝑥𝑡 ) = det 2𝜋𝑄𝑡 −2 exp{− (𝑧𝑡 − 𝐶𝑡 𝑥𝑡 )𝑇 𝑄𝑡 −1 (𝑧𝑡 − 𝐶𝑡 𝑥𝑡 )}                                   (7)
+                                   2
+                                                                        5 – Kalman Filter and EKF
+KF | Algorithm
+                                                                                              14
+
+
+
+
+                                         Initial belief
+
+
+                                                  𝑏𝑒𝑙(𝑥0 )
+                          𝑏𝑒𝑙(𝑥𝑡−1 )
+
+
+                                                             𝑢𝑡
+                                Prediction                        Control input
+
+
+
+                 𝑡 =𝑡+1
+                            𝑏𝑒𝑙 (𝑥𝑡 )
+
+
+                                                             𝑧𝑡
+                               Correction
+                                                                  New measurement
+                          (measurement update)
+
+
+                            𝑏𝑒𝑙(𝑥𝑡 )
+                                                                                           5 – Kalman Filter and EKF
+KF | Algorithm
+                                                                                                                   15
+
+
+
+
+1. 𝜇ҧ𝑡 = 𝐴𝑡 𝜇𝑡−1 + 𝐵𝑡 𝑢𝑡
+                                                         Prediction                                           𝑏𝑒𝑙(𝑥0 )
+                                                                                       𝑏𝑒𝑙(𝑥𝑡−1 )
+2.     Σത𝑡 = 𝐴𝑡 Σ𝑡−1 𝐴𝑇𝑡 + 𝑅𝑡
+                                                         𝑏𝑒𝑙 (𝑥𝑡 )
+                                                                                                                         𝑢𝑡
+                                                                                             Prediction
+3. 𝐾𝑡 = Σത𝑡 𝐶𝑡𝑇 (𝐶𝑡 Σത 𝑡 𝐶𝑡𝑇 + 𝑄𝑡 )−1
+4. 𝜇𝑡 = 𝜇ҧ𝑡 + 𝐾𝑡 (𝑧𝑡 − 𝐶𝑡 𝜇ҧ𝑡 )                          Correction
+
+
+
+
+                                                                              𝑡 =𝑡+1
+                                                         𝑏𝑒𝑙(𝑥𝑡 )
+5. Σ𝑡 = (𝐼 − 𝐾𝑡 𝐶𝑡 )Σത 𝑡                                                                𝑏𝑒𝑙 (𝑥𝑡 )
+
+
+                                                                                            Correction                   𝑧𝑡
+𝜇ҧ𝑡 , Σത 𝑡 , 𝑏𝑒𝑙 (𝑥𝑡 )   Overline means apriori (before observations)                  (measurement update)
+
+𝜇𝑡 , Σ𝑡 , 𝑏𝑒𝑙(𝑥𝑡 )       No overline means aposteriori (after observations)
+                                                                                        𝑏𝑒𝑙(𝑥𝑡 )
+𝐾𝑡                       Kalman Gain
+
+𝐼                        Identity matrix
+                                                                                                            5 – Kalman Filter and EKF
+    KF | Summary
+                                                                                                                                  16
+
+
+
+
+▪   Kalman filter represents the belief 𝑏𝑒𝑙(𝑥𝑡 ) by the mean 𝜇𝑡 and the covariance Σ𝑡 .
+
+▪   In the prediction step, the mean 𝜇ҧ𝑡 is updated using the deterministic part of the state transition function (4).
+
+▪   The posterior mean 𝜇𝑡 is based on the predicted mean 𝜇ҧ𝑡 and the difference between measurement 𝑧𝑡 and predicted
+    measurement 𝐶𝑡 𝜇ҧ𝑡 multiplied by the Kalman gain 𝐾𝑡 .
+
+
+
+▪   To keep the posterior Gaussian, three conditions must be met:
+      1)   The initial belief must be normally distributed.
+      2)   State transition function must be linear in its arguments.
+      3)   Measurement function must be linear in its arguments.
+
+                           1)                                        2)                                       3)
+
+             𝑏𝑒𝑙(𝑥0 )~𝒩(𝑥0 ; 𝜇0 , Σ0 )                𝑥𝑡 = 𝐴𝑡 𝑥𝑡−1 + 𝐵𝑡 𝑢𝑡 + 𝜀𝑡                      𝑧𝑡 = 𝐶𝑡 𝑥𝑡 + 𝛿𝑡
+
+
+                                                                   Linear      Gaussian                    Linear   Gaussian
+                                                                                noise                                noise
+                                                                                                                                                            5 – Kalman Filter and EKF
+                   KF | Summary
+                                                                                                                                                                                  17
+
+
+
+
+              Since the Gaussian is unimodal:
+
+              ▪ KF is suitable for local localization problems in robotics, e.g.for tracking problems with known initial pose.
+                The belief represents the estimate of the true state with a small uncertainty.
+              ▪ KF is not suitable for global localization problems in robotics, where many hypotheses exist, e.g. for robot
+                localization in the known map with unknown initial pose.
+
+
+
+
+                                                                   [1]                                                                              [1]
+
+
+1. THRUN, Sebastian, BURGARD, Wolfram and FOX, Dieter, 2005. Probabilistic Robotics. 1st edition. Cambridge, Mass: The MIT Press. ISBN 978-0-262-20162-9.
+                                                                                            5 – Kalman Filter and EKF
+   KF | Example – Robot in 1D
+                                                                                                                     18
+
+
+
+
+▪ Robot is moving in 1 dimension (horizontal axis).
+▪ A user controls its velocity; this process comprises Gaussian noise with std. dev. 𝜎 = 0.8 𝑚/𝑠. The user applies
+  the following sequence of controls: 5, 5, 5.
+▪ There is a sensor measuring robot’s global position; the measurement comprises Gaussian noise with std. dev
+  𝜎 = 0.9 𝑚.
+▪ The robot starts at time 0 𝑠 at position 0 𝑚; the initial belief is defined by 𝜇 = 0 𝑚 and variance 𝜎 2 = 0.5 𝑚.
+▪ The iteration period is 1 𝑠. Use the KF to estimate robot’s position at t = 3 𝑠.
+
+
+
+   The linear system:     𝑥𝑡 = 𝐴𝑡 𝑥𝑡−1 + 𝐵𝑡 𝑢𝑡 + 𝜀𝑡            𝐴=1              𝜇0 = 0
+                          𝑧𝑡 = 𝐶𝑡 𝑥𝑡 + 𝛿𝑡                      𝐵 = 𝑑𝑡           Σ0 = 0.5
+                                                               𝐶=1              𝑢1 = 5
+                                                               𝑅 = 0.82         𝑢2 = 5
+    State 𝑥 – (1 × 1)                                          𝑄 = 0.92         𝑢3 = 5
+    Measurement 𝑧 – (1 × 1)
+                                                              5 – Kalman Filter and EKF
+KF | Example – Robot in 1D
+                                                                                    19
+
+
+
+
+                             The initial position and belief 𝑏𝑒𝑙 𝑥0 .
+                                                                  5 – Kalman Filter and EKF
+KF | Example – Robot in 1D
+                                                                                        20
+
+
+
+
+                             The real motion of the robot at 𝑡 = 1.
+                             𝑥𝑡 = 𝐴𝑡 𝑥𝑡−1 + 𝐵𝑡 𝑢𝑡 + 𝜀𝑡
+
+
+
+                             KF prediction at 𝑡 = 1.
+                             𝜇ҧ 𝑡 = 𝐴𝑡 𝜇𝑡−1 + 𝐵𝑡 𝑢𝑡
+                             Σത𝑡 = 𝐴𝑡 Σ𝑡−1 𝐴𝑇𝑡 + 𝑅𝑡
+
+
+
+                             The real measurement at 𝑡 = 1.
+                             𝑧𝑡 = 𝐶𝑡 𝑥𝑡 + 𝛿𝑡
+
+      TRUE
+
+             ESTIMATE        KF correction at 𝑡 = 1.
+                             𝐾𝑡 = Σത𝑡 𝐶𝑡𝑇 (𝐶𝑡 Σത 𝑡 𝐶𝑡𝑇 + 𝑄𝑡 )−1
+                             𝜇𝑡 = 𝜇ҧ 𝑡 + 𝐾𝑡 (𝑧𝑡 − 𝐶𝑡 𝜇ҧ 𝑡 )
+                             Σ𝑡 = (𝐼 − 𝐾𝑡 𝐶𝑡 )Σത 𝑡
+                             5 – Kalman Filter and EKF
+KF | Example – Robot in 1D
+                                                   21
+                                            5 – Kalman Filter and EKF
+                                                                  22
+
+
+
+
+Extended Kalman Filter (EKF)
+    State estimator for nonlinear systems
+                                                                                                                                                            5 – Kalman Filter and EKF
+                   EKF | Introduction
+                                                                                                                                                                                  23
+
+
+
+
+              ▪ KF is optimal for linear Gaussian systems.
+              ▪ Most real-world systems are nonlinear.
+
+              ▪ Nonlinearity in both state transition and measurement.
+              ▪ KF modifications for nonlinear systems:                                                                                                             [1]
+
+
+                      ▪ Extended Kalman Filter (EKF)
+                      ▪ Unscented Kalman Filter (UKF)
+
+              ▪ EKF:
+                      ▪ The standard algorithm for state estimation in navigation systems
+                        and robotics.
+                      ▪ Not an optimal estimator for nonlinear systems.
+                                                                                                                                                                    [2]
+
+
+
+
+1. THRUN, Sebastian, BURGARD, Wolfram and FOX, Dieter, 2005. Probabilistic Robotics. 1st edition. Cambridge, Mass: The MIT Press. ISBN 978-0-262-20162-9.
+2. https://www.turtlebot.com/
+                                                                                                                                                                  5 – Kalman Filter and EKF
+                   EKF | Linear and Nonlinear Systems
+                                                                                                                                                                                        24
+
+
+
+
+                                                 Linear function                                                                            Nonlinear function
+
+
+
+
+                                                          [1]                                                                                               [1]
+
+
+
+1. THRUN, Sebastian, BURGARD, Wolfram and FOX, Dieter, 2005. Probabilistic Robotics. 1st edition. Cambridge, Mass: The MIT Press. ISBN 978-0-262-20162-9.
+                                                                                              5 – Kalman Filter and EKF
+    EKF | Nonlinear System Description
+                                                                                                                       25
+
+
+
+
+Nonlinear discrete-time system (process):
+
+     𝑥𝑡 = 𝑔(𝑢𝑡 , 𝑥𝑡−1 ) + 𝜀𝑡          (8)              defines the state transition probability    𝑝(𝑥𝑡 |𝑢𝑡 , 𝑥𝑡−1 )
+
+     𝑧𝑡 = ℎ(𝑥𝑡 ) + 𝛿𝑡                 (9)              defines the measurement probability         𝑝(𝑧𝑡 |𝑥𝑡 )
+
+
+𝑥𝑡 , 𝑥𝑡−1    (n × 1) state vectors                                  𝑧𝑡        (k × 1) measurement vector
+𝑢𝑡           (m × 1) control vector                                 ℎ         Nonlinear measurement function
+
+𝑔            Nonlinear state transition function                    𝛿𝑡        (k × 1) measurement noise; Gaussian with zero
+                                                                              mean and covariance 𝑄𝑡 (k × k)
+𝜀𝑡           (n × 1) process noise (state transition randomness);
+             Gaussian with zero mean and covariance 𝑅𝑡 (n × n)
+                                                                                                                                                                  5 – Kalman Filter and EKF
+                   EKF | Algorithm
+                                                                                                                                                                                        26
+
+
+
+
+              ▪ Approximates nonlinear functions via first order
+                Taylor expansion – linearization.
+
+              ▪ Linear approximation → slope computation → partial
+                derivation → Jacobian
+
+              ▪ Once 𝑔 and ℎ are linearized, the algorithm is
+                equivalent to KF.
+
+              ▪ Limitations:
+                      ▪ Highly-nonlinear systems.
+                      ▪ Noisy systems.
+
+              ▪ Nonlinear system:
+
+                          𝑥𝑡 = 𝑔(𝑢𝑡 , 𝑥𝑡−1 ) + 𝜀𝑡
+
+                          𝑧𝑡 = ℎ(𝑥𝑡 ) + 𝛿𝑡                                                                                                                  [1]
+
+
+
+1. THRUN, Sebastian, BURGARD, Wolfram and FOX, Dieter, 2005. Probabilistic Robotics. 1st edition. Cambridge, Mass: The MIT Press. ISBN 978-0-262-20162-9.
+                                                                                           5 – Kalman Filter and EKF
+EKF | Algorithm
+                                                                                                                   27
+
+
+
+
+1. 𝜇ҧ𝑡 = 𝑔(𝑢𝑡 , 𝜇𝑡−1 )
+                                                         Prediction                                           𝑏𝑒𝑙(𝑥0 )
+                                                                                       𝑏𝑒𝑙(𝑥𝑡−1 )
+2.     Σത𝑡 = 𝐺𝑡 Σ𝑡−1 𝐺𝑡𝑇 + 𝑅𝑡
+                                                         𝑏𝑒𝑙 (𝑥𝑡 )
+                                                                                                                         𝑢𝑡
+                                                                                             Prediction
+3. 𝐾𝑡 = Σത𝑡 𝐻𝑡𝑇 (𝐻𝑡 Σത𝑡 𝐻𝑡𝑇 + 𝑄𝑡 )−1
+4. 𝜇𝑡 = 𝜇ҧ𝑡 + 𝐾𝑡 (𝑧𝑡 − ℎ(𝜇ҧ𝑡 ))                          Correction
+
+
+
+
+                                                                              𝑡 =𝑡+1
+                                                         𝑏𝑒𝑙(𝑥𝑡 )
+5. Σ𝑡 = (𝐼 − 𝐾𝑡 𝐻𝑡 )Σത 𝑡                                                                𝑏𝑒𝑙 (𝑥𝑡 )
+
+
+                                                                                            Correction                   𝑧𝑡
+𝜇ҧ𝑡 , Σത 𝑡 , 𝑏𝑒𝑙 (𝑥𝑡 )   Overline means apriori (before observations)                  (measurement update)
+
+𝜇𝑡 , Σ𝑡 , 𝑏𝑒𝑙(𝑥𝑡 )       No overline means aposteriori (after observations)
+                                                                                        𝑏𝑒𝑙(𝑥𝑡 )
+𝐾𝑡                       Kalman Gain
+
+𝐼                        Identity matrix
+                                                                                 5 – Kalman Filter and EKF
+EKF | Algorithm Comparison
+                                                                                                       28
+
+
+
+
+                   KF Algorithm                                EKF Algorithm
+
+       1. 𝜇ҧ𝑡 = 𝐴𝑡 𝜇𝑡−1 + 𝐵𝑡 𝑢𝑡                      1. 𝜇ҧ𝑡 = 𝑔(𝑢𝑡 , 𝜇𝑡−1 )
+       2. Σത𝑡 = 𝐴𝑡 Σ𝑡−1 𝐴𝑇𝑡 + 𝑅𝑡                     2. Σത𝑡 = 𝐺𝑡 Σ𝑡−1 𝐺𝑡𝑇 + 𝑅𝑡
+
+                                               vs.
+       3. 𝐾𝑡 = Σത𝑡 𝐶𝑡𝑇 (𝐶𝑡 Σത 𝑡 𝐶𝑡𝑇 + 𝑄𝑡 )−1         3. 𝐾𝑡 = Σത𝑡 𝐻𝑡𝑇 (𝐻𝑡 Σത𝑡 𝐻𝑡𝑇 + 𝑄𝑡 )−1
+       4. 𝜇𝑡 = 𝜇ҧ𝑡 + 𝐾𝑡 (𝑧𝑡 − 𝐶𝑡 𝜇ҧ𝑡 )               4. 𝜇𝑡 = 𝜇ҧ𝑡 + 𝐾𝑡 (𝑧𝑡 − ℎ(𝜇ҧ𝑡 ))
+       5. Σ𝑡 = (𝐼 − 𝐾𝑡 𝐶𝑡 )Σത 𝑡                      5. Σ𝑡 = (𝐼 − 𝐾𝑡 𝐻𝑡 )Σത 𝑡
+
+
+                 𝐴𝑡 𝜇𝑡−1 + 𝐵𝑡 𝑢𝑡                                 𝑔(𝑢𝑡 , 𝜇𝑡−1 )
+                 𝐴𝑡                                              𝐺𝑡
+                 𝐶𝑡 𝜇ҧ 𝑡                                         ℎ(𝜇ҧ 𝑡 )
+                 𝐶𝑡                                              𝐻𝑡
+                                                                                                                                                            5 – Kalman Filter and EKF
+                   EKF | Algorithm
+                                                                                                                                                                                  29
+
+
+
+
+                 ▪ Jacobian matrix – the matrix of first-order partial
+                   derivatives of a vector-valued function.
+                 ▪ 𝐺 and 𝐻 matrices pose Jacobians matrices of the state
+                   transition function 𝑔(𝑥) and measurement function
+                   ℎ(𝑥), respectively.
+                                                                   𝜕𝑔1        𝜕𝑔1       𝜕𝑔1
+                                                                                      ⋯
+                                                                   𝜕𝑥1        𝜕𝑥2       𝜕𝑥𝑛
+                           𝑔1 𝑥                                    𝜕𝑔2        𝜕𝑔2       𝜕𝑔2
+                                                                                      ⋯
+                     𝑔 𝑥 = 𝑔2 𝑥                                𝐺 = 𝜕𝑥1        𝜕𝑥2       𝜕𝑥𝑛
+                             ⋮                                      ⋮          ⋮      ⋱  ⋮
+                           𝑔𝑚 𝑥                                    𝜕𝑔𝑚        𝜕𝑔𝑚       𝜕𝑔𝑚
+                                                                                      ⋯
+                                                                   𝜕𝑥1        𝜕𝑥2       𝜕𝑥𝑛
+
+                                                                   𝜕ℎ1        𝜕ℎ1          𝜕ℎ1
+                                                                                      ⋯
+                                                                   𝜕𝑥1        𝜕𝑥2          𝜕𝑥𝑛
+                           ℎ1 𝑥                                    𝜕ℎ2        𝜕ℎ2          𝜕ℎ2
+                           ℎ2 𝑥                                𝐻 = 𝜕𝑥1                ⋯
+                     ℎ 𝑥 =                                                    𝜕𝑥2          𝜕𝑥𝑛
+                             ⋮                                      ⋮          ⋮      ⋱     ⋮
+                           ℎ𝑚 𝑥                                    𝜕ℎ𝑚        𝜕ℎ𝑚          𝜕ℎ𝑚
+                                                                                      ⋯                                                                       [1]
+                                                                   𝜕𝑥1        𝜕𝑥2          𝜕𝑥𝑛
+
+
+1. THRUN, Sebastian, BURGARD, Wolfram and FOX, Dieter, 2005. Probabilistic Robotics. 1st edition. Cambridge, Mass: The MIT Press. ISBN 978-0-262-20162-9.
+                                                                                  5 – Kalman Filter and EKF
+                    EKF | Example – Differential Drive
+                                                                                                        30
+
+
+
+
+               ▪ Differential wheeled robot:
+
+                       ▪ State comprises position and heading: 𝑥 = [𝑥, 𝑦, 𝜃]𝑇 .
+
+                       ▪ Control comprises linear/angular speed: 𝑢 = [𝑣, 𝜔]𝑇 .
+
+               ▪ The relation between the control and state is nonlinear:
+
+                                𝑥𝑡 = 𝑥𝑡−1 + cos 𝜃𝑡−1 𝑣𝑡 Δ𝑡
+                                𝑦𝑡 = 𝑦𝑡−1 + sin 𝜃𝑡−1 𝑣𝑡 Δ𝑡
+                                𝜃𝑡 = 𝜃𝑡−1 + 𝜔𝑡 Δ𝑡
+                                                                                       [1]
+
+
+
+
+1. https://www.turtlebot.com/
+                                                                                        5 – Kalman Filter and EKF
+                    EKF | Example – Differential Drive
+                                                                                                              31
+
+
+
+
+               ▪ EKF prediction step:
+
+                           𝜇ҧ 𝑡 = 𝑔(𝑢𝑡 , 𝜇𝑡−1 )
+
+                           Σത𝑡 = 𝐺𝑡 Σ𝑡−1 𝐺𝑡𝑇 + 𝑅𝑡
+
+
+                                                𝑔1 𝑢𝑡 , 𝜇𝑡−1      𝑥𝑡−1 + cos 𝜃𝑡−1 𝑣𝛥𝑡
+                        𝜇ҧ 𝑡 = 𝑔 𝑢𝑡 , 𝜇𝑡−1    = 𝑔2 𝑢𝑡 , 𝜇𝑡−1    = 𝑦𝑡−1 + sin 𝜃𝑡−1 𝑣𝛥𝑡
+                                                𝑔3 𝑢𝑡 , 𝜇𝑡−1          𝜃𝑡−1 + 𝜔𝛥𝑡
+
+                             𝜕𝑔1        𝜕𝑔1       𝜕𝑔1
+                                                                                             [1]
+                             𝜕𝑥         𝜕𝑦        𝜕𝜃
+                             𝜕𝑔2        𝜕𝑔2       𝜕𝑔2   1   0   − sin 𝜃𝑡−1 𝑣𝑡 Δ𝑡
+                          𝐺=                          = 0   1   cos 𝜃𝑡−1 𝑣𝑡 Δ𝑡
+                             𝜕𝑥         𝜕𝑦        𝜕𝜃
+                                                        0   0          1
+                             𝜕𝑔3        𝜕𝑔3       𝜕𝑔3
+                             𝜕𝑥         𝜕𝑦        𝜕𝜃
+
+
+1. https://www.turtlebot.com/
+                                                                                                                                                                    5 – Kalman Filter and EKF
+                   Supporting Materials
+                                                                                                                                                                                                        32
+
+
+
+
+              ▪ Probabilistic Robotics book, chapters 3.1 – 3.3 [PR]
+
+              ▪ KF basics by R. Faragher [1]: https://ieeexplore.ieee.org/document/6279585
+
+              ▪ Udacity course Artificial Intelligence for Robotics: https://classroom.udacity.com/courses/cs373
+
+              ▪ Cyrill Stachniss KF & EKF presentation (1hr 13min): https://www.youtube.com/watch?v=E-6paM_Iwfc&t=558s
+
+
+
+
+1. FARAGHER, R., 2012. Understanding the Basis of the Kalman Filter Via a Simple and Intuitive Derivation. IEEE Signal Processing Magazine. 2012. Vol. 29, no. 5, p. 128–132. DOI 10.1109/MSP.2012.2203621.
+                                                      5 – Kalman Filter and EKF
+                                                                            33
+
+
+
+
+                 Petr Gabrlik
+                   gabrlik@vut.cz
+
+
+            Brno University of Technology
+Faculty of Electrical Engineering and Communication
+    Department of Control and Instrumentation
+
+
+
+
+            Robotics and AI Research Group
+

@@ -1,0 +1,9 @@
+Discretizing map
+Session: algorithms\tasks\Project\RunSessions\debug_proc_indoor_1_r01_01_814724
+Saved: algorithms\tasks\Project\RunSessions\debug_proc_indoor_1_r01_01_814724\project_tuning_debug_runs.csv
+{Reference to a cleared variable result_file.
+
+Error in project_debug_process_worker (line 74)
+save(result_file, 'worker_result', '-v7');
+} 
+ERROR: MATLAB error Exit Status: 0x00000001

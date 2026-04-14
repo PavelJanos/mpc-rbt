@@ -1,0 +1,770 @@
+3 – Kinematics and Motion control
+Advanced Methods for Mapping and Self-localization in Robotics
+MPC-MAP
+
+
+
+
+Tomas Lazna
+Brno University of Technology
+2025
+                                                                                                                                                        Kinematics and Motion control
+                   Motivation
+                                                                                                                                                                                                 2
+
+
+
+
+             What is motion control for?
+             ▪ Following known trajectory
+             ▪ Kinematic model is required –
+               a relation between the wheels speed
+               and the robot motion
+             ▪ Are there any constraints?
+             ▪ How to model motion?
+
+
+
+                                                                                                                                                                                                     [1]
+
+
+
+
+1. ABDELWAHAB, Mohamed et al. Trajectory Tracking of Wheeled Mobile Robots Using Z-Number Based Fuzzy Logic. IEEE Access [online]. 2020, 8, 18426-18441 [cit. 2022-02-10]. DOI: 10.1109/ACCESS.2020.2968421
+                                             Kinematics and Motion control
+                                                                        3
+
+
+
+
+            Kinematics
+Describing and modeling the robot movement
+                                                                                                                                                                Kinematics and Motion control
+                    Introduction
+                                                                                                                                                                                                4
+
+
+
+
+              ▪ Types of drive
+                       ▪ Differential
+                       ▪ Ackermann
+                       ▪ Omnidirectional
+                       ▪ Others …
+
+              ▪ Kinematics
+                       ▪ „Geometry of motion“
+                       ▪ Relation (acceleration –) velocity – position
+                       ▪ Cause of motion is not analyzed
+
+              ▪ Dynamics
+                       ▪ Focuses on „why is object moving“
+                       ▪ Forces, torques, mass, etc.
+
+                                                                                                                                                                                                    [1]
+1. Electronics and Robotics Club. The ERC Handbook: Drive Mechanism [online]. BITS Goa, 2020 [cit. 2022-02-14]. Available at: https://erc-bpgc.github.io/handbook/mechanical/drive_mechanism/
+                                                                                                                                                                  Kinematics and Motion control
+                    Holonomic vs. non-holonomic
+                                                                                                                                                                                             5
+
+
+
+
+              ▪ Degrees of freedom (DOFs)
+                       ▪ Minimum number of real numbers to
+                         represent the robot‘s configuration
+                       ▪ Most actuators control a single DOF
+                       ▪ Either translational or rotational
+                       ▪ Depends on the type of robot
+
+              ▪ Degrees of motion (DOMs)
+                       ▪ = Differentiable DOFs (DDOFs)                                                                                                                                            [1]
+
+                       ▪ Number of DOFs that can be directly
+                         accessed by the actuators
+                       ▪ Also number of independent motion velocities
+                                ▪ Unicycle, Bicycle
+                                ▪      =2             =1
+
+
+1. PROROK, Amanda. Mobile Robot Systems, Lecture 3: Robot Motion & Control. In: YouTube [online]. 2021 [cit. 2022-02-16]. Available at: https://youtu.be/tocxIukOa-I
+                                                                                                                                                        Kinematics and Motion control
+                     Holonomic vs. non-holonomic
+                                                                                                                                                                                   6
+
+
+
+                                                                                                                                                    Examples of holonomic systems:
+               ▪ Constraints
+                         ▪ Constrain position = holonomic
+                         ▪ Constrain velocity = non-holonomic
+
+               ▪ Integrability of constraints
+                         ▪ 𝑓 𝒒, 𝑡 – depends only on position = integrable = holonomic                                                                            [1]                     [1]
+
+                         ▪ 𝑓(𝒒, 𝒒,ሶ 𝑡) – depends also on velocity = is not integrable =
+                           non-holonomic
+
+               ▪ Holonomic robot
+                         ▪ DOF = DOM (= DDOF)
+                         ▪ All constraints are holonomic
+
+               ▪ Non-holonomic robot
+                         ▪ DOF > DOM
+                         ▪ Position depends on the order of control inputs!
+                                                                                                                                                                                   [2]
+
+1. HRABEC, Jakub. Kinematika mobilních robotů: Stručný úvod do problematiky. Prezentace pro předmět MPC-RBT. Vysoké učení technické v Brně, 2021.
+2. Robotics Lab [online]. Nairi-Tech, 2014 [cit. 2021-02-28]. Available at: http://nairi-tech.com/products/view/robotics-lab.html
+                                                                                                                                                    Kinematics and Motion control
+                   Holonomic vs. non-holonomic
+                                                                                                                                                                               7
+
+
+
+
+                                                                                                                                                                 Differential drive =
+                                                                                                                                                                   non-holonomic
+
+
+
+
+                                                                                                                                                    [1]
+
+                                                                        Depends on the order!
+1. HRABEC, Jakub. Kinematika mobilních robotů: Stručný úvod do problematiky. Prezentace pro předmět MPC-RBT. Vysoké učení technické v Brně, 2021.
+                                                                                                                                                    Kinematics and Motion control
+                   State of the robot in 2D
+                                                                                                                                                                               8
+
+
+
+
+              ▪ State
+                      ▪ Position of the reference point in the world frame – x, y
+                      ▪ Orientation – θ
+                      ▪ Describes configuration of the robot body
+                      ▪ 𝒙 = (𝑥, 𝑦, 𝜃)
+
+              ▪ Extended state
+                      ▪ State + additional parameters
+                      ▪ E. g., steering angle Φ in Ackermann drive
+                      ▪ 𝒙Ack = (𝑥, 𝑦, 𝜃, Φ)
+
+
+                                                                                                                                                                                    [1]
+
+
+
+
+1. HRABEC, Jakub. Kinematika mobilních robotů: Stručný úvod do problematiky. Prezentace pro předmět MPC-RBT. Vysoké učení technické v Brně, 2021.
+                                                                                                                                                    Kinematics and Motion control
+                   Differential drive
+                                                                                                                                                                               9
+
+
+
+
+              ▪ Parameters of the chassis                                             ▪ Simplification to unicycle                                           𝑟(𝜔𝑅 + 𝜔𝐿 )
+                                                                                                                                                       𝑣=
+                                                                                                                                                                 2
+                      ▪ Wheel radius 𝑟                                                        ▪ Forward velocity 𝑣
+                      ▪ Distance between wheels 𝑑                                             ▪ Angular velocity 𝜔                                           𝑟(𝜔𝑅 − 𝜔𝐿 )
+                                                                                                                                                       𝜔=
+              ▪ Control inputs                                                                                                                                   𝑑
+                                                                                                     𝑣 = 𝜔𝑅
+                      ▪ Speed of wheels 𝜔𝑅 , 𝜔𝐿                                                                                                                2𝑣 + 𝜔𝑑
+                                                                                                                                                       𝜔𝑅 =
+                                                                                                                                                                  2𝑟
+
+                                                                                                                                                            2𝑣 − 𝜔𝑑
+                                                                                                                                                       𝜔𝐿 =
+                                                                                                                                                               2𝑟
+
+
+
+
+                                                                                                                                     [1]
+
+
+1. HRABEC, Jakub. Kinematika mobilních robotů: Stručný úvod do problematiky. Prezentace pro předmět MPC-RBT. Vysoké učení technické v Brně, 2021.
+                                                                                                                                                     Kinematics and Motion control
+                   Differential drive
+                                                                                                                                                                               10
+
+
+
+
+              ▪ State equations
+                                                                                                                                                                               𝑦ሶ
+                      ▪ 3 states                                                                                                                                       tan 𝜃 =
+                                                                                                                                                                               𝑥ሶ
+                      ▪ 2 control inputs                                                                                        𝑦ሶ = 𝑣𝑦 =
+                            𝑥ሶ   cos 𝜃     0                                                                                     𝑣Ԧ ∙ sin 𝜃
+                            𝑦ሶ = sin 𝜃 𝑣 + 0 𝜔
+                            𝜃ሶ     0       1                                                                                                        𝑥ሶ = 𝑣𝑥 = 𝑣Ԧ ∙ cos 𝜃
+
+
+                      ▪ Constraint: 𝑥ሶ sin 𝜃 = 𝑦ሶ cos 𝜃
+
+                                                                                                                                                                              𝜃ሶ = 𝜔
+
+
+
+
+                                                                                                                                                                              [1]
+1. HRABEC, Jakub. Kinematika mobilních robotů: Stručný úvod do problematiky. Prezentace pro předmět MPC-RBT. Vysoké učení technické v Brně, 2021.
+                                                                                                                                                             Kinematics and Motion control
+                   Differential drive
+                                                                                                                                                                                                       11
+
+
+
+
+              ▪ Forward kinematics
+                       ▪ Initial state and control inputs are known
+                       ▪ What is the final state of the robot?
+                       ▪ Straightforward task
+
+              ▪ Inverse kinematics
+                       ▪ Initial and final states are known
+                                                                                                                                                                                                                [1]
+                       ▪ What are the control inputs?
+                       ▪ Problematic in case of non-holonomic platforms
+                       ▪ Singular points
+
+              ▪ Instantaneous center of curvature (rotation)
+                       ▪ Each wheel must rotate along its y-axis
+                       ▪ Wheels move along circular (R < ∞) or straight trajectories                                                                                                                                  [2]
+
+
+1. MAULANA, Eka, M. Aziz MUSLIM a Akhmad ZAINURI. Inverse kinematics of a two-wheeled differential drive an autonomous mobile robot. In: 2014 Electrical Power, Electronics, Communicatons, Control and Informatics Seminar
+   (EECCIS) [online]. IEEE, 2014 [cit. 2022-02-14]. ISBN 978-1-4799-6947-0. DOI: 10.1109/EECCIS.2014.7003726
+2. BURGARD, Wolfram et al. Probabilistic Robotics: Wheeled Locomotion. Uni Freiburg, 2005.
+                                                                                                                                                             Kinematics and Motion control
+                   Differential drive – forward kinematics
+                                                                                                                                                                                                      12
+
+
+
+
+              ▪ Turning radius
+                           𝑟(𝜔𝑅 + 𝜔𝐿 )
+                        𝑣      2         𝑑(𝜔𝑅 + 𝜔𝐿 )
+                      𝑅= =             =
+                        𝜔 𝑟(𝜔𝑅 − 𝜔𝐿 ) 2(𝜔𝑅 − 𝜔𝐿 )
+                               𝑑
+              ▪ ICC
+                        𝐼𝐶𝐶𝑥   𝑥 + 𝑅 cos(𝜃 + 𝜋/2)   𝑥 − 𝑅 sin 𝜃                                                                                                                                             [1]
+                        𝐼𝐶𝐶𝑦 =                    =
+                               𝑦 + 𝑅 sin(𝜃 + 𝜋/2)   𝑦 + 𝑅 cos 𝜃
+
+
+              ▪ Rotation matrix
+                        𝑥
+                        ෞ2   cos ψ                  sin ψ        0      ෞ1
+                                                                        𝑥
+                        ෞ2 = −sin ψ
+                        𝑦                           cos ψ        0      ෞ1
+                                                                        𝑦
+                        1      0                      0          1      1
+                        𝑥
+                        ෞ1   cos ψ                − sin ψ        0       ෞ2
+                                                                         𝑥
+                        ෞ1 = sin ψ
+                        𝑦                          cos ψ         0       ෞ2
+                                                                         𝑦
+                        1      0                     0           1       1                                                                                                                                              [2]
+
+1. MAULANA, Eka, M. Aziz MUSLIM a Akhmad ZAINURI. Inverse kinematics of a two-wheeled differential drive an autonomous mobile robot. In: 2014 Electrical Power, Electronics, Communicatons, Control and Informatics Seminar
+   (EECCIS) [online]. IEEE, 2014 [cit. 2022-02-14]. ISBN 978-1-4799-6947-0. DOI: 10.1109/EECCIS.2014.7003726
+2. WOOLFREY, Jon. 2.2 Rotation Matrices. In: YouTube [online]. 2018 [cit. 2022-02-15]. Available at: https://youtu.be/4srS0s1d9Yw
+                                                                                                                                                                    Kinematics and Motion control
+                    Differential drive – forward kinematics
+                                                                                                                                                                                              13
+
+
+
+
+                                                                                                                                                                                                    [1]
+
+                                                              1. Translate the ICC                              2. Rotate about z-axis                            3. Translate back to the
+                                                                  to origin                                                                                          original ICC
+
+
+
+
+                      𝑥′   cos(𝜔∆𝑡) − sin(𝜔∆𝑡)                                       0        𝑥 − 𝐼𝐶𝐶𝑥   𝐼𝐶𝐶𝑥                                  𝑥   −𝑅 sin 𝜃 + 𝑅 sin(𝜃 + 𝜔∆𝑡)
+                      𝑦′ = sin(𝜔∆𝑡) cos(𝜔∆𝑡)                                         0        𝑦 − 𝐼𝐶𝐶𝑦 + 𝐼𝐶𝐶𝑦                                = 𝑦 + 𝑅 cos 𝜃 − 𝑅 cos(𝜃 + 𝜔∆𝑡)
+                      𝜃′       0         0                                           1           𝜃       𝜔∆𝑡                                   𝜃              𝜔∆𝑡
+
+
+1. ALLEN, Peter K. Notes – Differential Drive Robots [online]. Columbia University, 2017 [cit. 2022-02-15]. Available at: http://www.cs.columbia.edu/~allen/F17/NOTES/icckinematics.pdf
+                                                                                          Kinematics and Motion control
+          Differential drive – inverse kinematics
+                                                                                                                    14
+
+
+
+
+       ▪ We can express the state equations using the rotation matrix
+World frame   𝑥ሶ   cos 𝜃   − sin 𝜃   0   𝑥ሶ 𝑅     cos 𝜃       − sin 𝜃   0   𝑣
+              𝑦ሶ = sin 𝜃    cos 𝜃    0   𝑦ሶ 𝑅   = sin 𝜃        cos 𝜃    0   0
+              𝜃ሶ     0        0      1   𝜃ሶ𝑅        0            0      1   𝜔
+                                         = 𝑹(𝜃)        Robot frame
+       ▪ Let us invert the equations
+              𝑣             𝑥ሶ            𝑥ሶ   cos 𝜃           sin 𝜃    0   𝑥ሶ   𝑣 = 𝑥ሶ cos 𝜃 + 𝑦ሶ sin 𝜃
+              0 = 𝑹−1 𝜃     𝑦ሶ = 𝑹T 𝜃     𝑦ሶ = −sin 𝜃          cos 𝜃    0   𝑦ሶ
+              𝜔             𝜃ሶ            𝜃ሶ     0               0      1   𝜃ሶ   𝜔 = 𝜃ሶ
+
+       ▪ Ideally, we would set
+              𝑥ሶ     𝑥𝐺 − 𝑥
+              𝑦ሶ = 𝐾 𝑦𝐺 − 𝑦          Goal = (𝑥𝐺 , 𝑦𝐺 , 𝜃𝐺 )
+              𝜃ሶ     𝜃𝐺 − 𝜃
+
+       ▪ But we have to follow the non-holonomic constraint 𝑥ሶ sin 𝜃 = 𝑦ሶ cos 𝜃
+                                                                                                            Kinematics and Motion control
+                     Probabilistic motion model
+                                                                                                                                      15
+
+
+
+
+               ▪ Motion is inherently uncertain → probabilistic models are applied
+               ▪ Some Bayesian algorithms require a posterior probability
+                 𝑝 𝑥𝑡 𝑥𝑡−1 , 𝑢𝑡 = what is the probability that action 𝑢𝑡 takes
+                 the system from state 𝑥𝑡−1 to state 𝑥𝑡
+
+               ▪ Two major types of motion models:
+                        ▪ Odometry-based – suitable for estimation
+                                           𝑥ҧ 𝑡−1
+                                𝑢𝑡 =              → 𝛿rot1 , 𝛿trans , 𝛿rot2
+                                            𝑥ҧ 𝑡
+
+                        ▪ Velicoty-based (dead reckoning) – suitable for prediction
+                                     𝑣𝑡
+                                𝑢𝑡 = 𝜔
+                                       𝑡
+
+
+
+
+1. BURGARD, Wolfram et al. Probabilistic Motion Models [online]. Uni Freiburg, 2011 [cit. 2022-02-16].                                      [1]
+   Available at: http://ais.informatik.uni-freiburg.de/teaching/ss11/robotics/slides/06-motion-models.pdf
+                                                                                                                                                                        Kinematics and Motion control
+                     Motion errors
+                                                                                                                                                                                                                16
+
+
+
+
+               ▪ Sources of motion errors
+
+
+
+
+                                                                                                                                                                                    [1]
+
+
+               ▪ „Banana-shaped“ probability distribution
+
+
+
+
+                                                                                                                                                                                 [2]
+
+
+
+1. BURGARD, Wolfram et al. Probabilistic Motion Models [online]. Uni Freiburg, 2011 [cit. 2022-02-16]. Available at: http://ais.informatik.uni-freiburg.de/teaching/ss11/robotics/slides/06-motion-models.pdf
+2. THRUN, Sebastian, Wolfram BURGARD and Dieter FOX. Probabilistic robotics. Massachusetts: MIT Press, 2006. ISBN 978-0-262-20162-9.
+                             Kinematics and Motion control
+                                                       17
+
+
+
+
+ Motion control
+Following pre-planned path
+                                                                                    Kinematics and Motion control
+  Path following
+                                                                                                              18
+
+
+
+
+▪ Path description
+    ▪ Closed-form expression (e.g., Bézier curves)
+    ▪ Sequence of waypoints (equidistant vs. adaptive spacing)
+
+▪ Global planning
+    ▪ Optimal path to goal – outlined in Lecture 6 – Path planning
+
+▪ Local planning
+    ▪ Optimizing path, considering the motion model
+    ▪ Avoiding obstacles – path may be altered to comply with observations
+    ▪ Inputs: estimated pose, global path, sensor readings
+    ▪ Parameters: kinematic and physical models of the robot, safety requirements
+    ▪ Output: local path
+                                                                Kinematics and Motion control
+  Path following
+                                                                                          19
+
+
+
+
+▪ Motion control
+    ▪ Navigate robot along the defined (global/local) path
+    ▪ May involve ‚emergency stop‘
+    ▪ Inputs: estimated pose, desired path, (sensor readings)
+    ▪ Parameters: kinematic model of the robot
+    ▪ Outputs: robot control = velocities
+                                          Kinematics and Motion control
+  Motion control in 1D
+                                                                    20
+
+
+
+
+▪ State model of the differential drive
+                                                             Kinematics and Motion control
+    Motion control in 1D
+                                                                                       21
+
+
+
+
+  ▪ Let us add a PID structure to control the 𝑦 state
+
+
+
+
+XTE = Cross
+ Track Error
+
+
+
+
+                                                        =0
+                                   Kinematics and Motion control
+  Motion control in 1D
+                                                             22
+
+
+
+
+▪ P controller
+
+
+
+                         =2
+
+
+
+
+                   =2
+
+
+
+  =1               =0
+
+
+                   =0         =0
+                                   Kinematics and Motion control
+  Motion control in 1D
+                                                             23
+
+
+
+
+▪ PD controller
+
+
+
+                         =2
+
+
+
+
+                   =2
+
+
+
+  =1               =0
+
+
+                   = 0.5      =0
+                                       Kinematics and Motion control
+  Motion control in 1D
+                                                                 24
+
+
+
+
+▪ PD controller – higher D gain
+
+
+
+                          =2
+
+
+
+
+                     =2
+
+
+
+  =1                 =0
+
+
+                     =2           =0
+                                             Kinematics and Motion control
+  Motion control in 1D
+                                                                       25
+
+
+
+
+▪ PD controller – with added error
+
+
+
+                          =2
+
+
+
+
+                     =2
+
+
+
+  =1                 =0
+
+
+                     =2              = 0.2
+                                              Kinematics and Motion control
+  Motion control in 1D
+                                                                        26
+
+
+
+
+▪ PID controller – with added error
+
+
+
+                             =2
+
+
+
+
+                      =2
+
+
+
+  =1                 = 0.8
+
+
+                      =2              = 0.2
+                                                                                                                                                            Kinematics and Motion control
+                   Motion control in 2D
+                                                                                                                                                                                                     27
+
+
+
+
+              ▪ Possible approaches
+                      ▪ Cross track error-based
+                      ▪ Target point-based
+                      ▪ Others …
+
+              ▪ XTE-based
+                      ▪ Compute cross track error (XTE) = (oriented)
+                        shortest distance between the robot and the path
+                      ▪ Employ arbitrary closed-loop (feedback) controller
+
+
+
+
+                                                                                                                                                                                                                [1]
+
+
+1. LEE, Ji-Hyeong; JEONG, Sang-Ki; JI, Dae-Hyeong; PARK, Hae-Yong; KIM, Do-Young et al. Unmanned Surface Vehicle Using a Leader–Follower Swarm Control Algorithm. Online. Applied Sciences. 2023, vol. 13, issue 5.
+   ISSN 2076-3417. Avaiable at: https://doi.org/10.3390/app13053120. [cit. 2024-02-14].
+                                                   Kinematics and Motion control
+  Motion control in 2D
+                                                                             28
+
+
+
+
+▪ Target point-based
+    ▪ Identify target (goal) coordinates 𝑥𝐺 , 𝑦𝐺
+         ▪ Waypoint
+         ▪ Point on a tangent
+    ▪ Pure pursuit path tracking
+    ▪ Feedback linearization
+                                                   a) Point on a tangent
+
+
+
+
+                                                   b) Waypoint
+                                                                             Kinematics and Motion control
+  Pure pursuit path tracking
+                                                                                                       29
+
+
+
+
+▪ Determine the curvature that will drive the vehicle to     a) Ideal case
+  the chosen target                                                     𝑣max
+                                                                |𝑅| ≥        ≥ 𝑅min
+                                                                        𝜔max
+▪ The target is at lookahead distance 𝑙 from the robot
+                                                                      𝑣max
+▪ Constraints: 𝑣max , 𝜔max , 𝑅min (minimal turning radius)       𝜔=        < 𝜔max
+                                                                       𝑅
+                                                                 𝑣 = 𝑣max
+
+                                       𝑥𝐺2 + 𝑦𝐺2 = 𝑙 2
+                                                             b) Limit forward velocity
+                                        𝑑 = 𝑅 − 𝑦𝐺
+                                                                 𝑣max
+                                                                      > |𝑅| ≥ 𝑅min
+                                                                 𝜔max
+                                             𝑙2
+                                         𝑅=                       𝜔 = 𝜔max ∙ sgn(𝑅)
+                                            2𝑦𝐺
+                                         (Oriented!)              𝑣 = 𝑅 ∙ 𝜔max < 𝑣max
+                                                                           Kinematics and Motion control
+  Pure pursuit path tracking
+                                                                                                     30
+
+
+
+
+▪ Determine the curvature that will drive the vehicle to     c) The goal cannot be reached
+  the chosen target                                                            𝑣max
+                                                                  𝑅 < 𝑅min ≤
+▪ The target is at lookahead distance 𝑙 from the robot                         𝜔max
+
+▪ Constraints: 𝑣max , 𝜔max , 𝑅min (minimal turning radius)       𝜔 = 𝜔max ∙ sgn(𝑅)
+
+                                                                 𝑣 = 𝑅min ∙ 𝜔max < 𝑣max
+                                       𝑥𝐺2 + 𝑦𝐺2 = 𝑙 2
+                                        𝑑 = 𝑅 − 𝑦𝐺
+                                                                                𝑣max
+                                                                       𝑅min ≤
+                                                                                𝜔max
+                                             𝑙2
+                                         𝑅=
+                                            2𝑦𝐺
+                                         (Oriented!)
+                                                                                                                                                                     Kinematics and Motion control
+                    Pure pursuit path tracking
+                                                                                                                                                                                               31
+
+
+
+
+               ▪ The effect of changing the lookahead distance
+               ▪ Similar to second order dynamic system (𝑙 acts as a damping factor)
+
+
+
+
+                                                                                                                                                                                        [1]
+
+
+
+
+1. COULTER, R. Craig. Implementation of the Pure Pursuit Path Tracking Algorithm [online]. The Robotics Institute, Carnegie Mellon University: 1992 [cit. 2022-02-18].
+   Available at: https://www.ri.cmu.edu/pub_files/pub3/coulter_r_craig_1992_1/coulter_r_craig_1992_1.pdf
+                                                                            Kinematics and Motion control
+   Feedback linearization
+                                                                                                      32
+
+
+
+
+▪ Linear control of holonomic point P to control a non-holonomic robot
+▪ Rigid connection of the robot and P                          d
+                                                               d𝑡    𝑥ሶ 𝑃 = 𝑥ሶ 𝑅 + 𝜀(−𝜃ሶ sin 𝜃)
+            𝑣                            𝑥𝑃 = 𝑥𝑅 + 𝜀 cos 𝜃
+▪ Key idea:   = 𝑓(𝑥ሶ 𝑃 , 𝑦ሶ 𝑃 )
+            𝜔                            𝑦𝑃 = 𝑦𝑅 + 𝜀 sin 𝜃           𝑦ሶ 𝑃 = 𝑦ሶ 𝑅 + 𝜀(𝜃ሶ cos 𝜃)
+
+
+
+                                                               𝑥ሶ 𝑃    cos 𝜃      − sin 𝜃
+                                                                    =𝑣       + 𝜀𝜔
+                                                               𝑦ሶ 𝑃    sin 𝜃       cos 𝜃
+
+
+
+
+                                                                    𝑣 = 𝑥ሶ 𝑃 cos 𝜃 + 𝑦ሶ 𝑃 sin 𝜃
+                                                                       1
+                                                                    𝜔 = (−𝑥ሶ 𝑃 sin 𝜃 + 𝑦ሶ 𝑃 cos 𝜃)
+                                                                       𝜀
+                                                                             Kinematics and Motion control
+Feedback linearization
+                                                                                                       33
+
+
+                                                 If goal is not stationary
+          𝑥ሶ 𝑃    𝑥𝐺 − 𝑥𝑃          𝑥ሶ 𝐺
+               =𝜅 𝑦 −𝑦         +
+          𝑦ሶ 𝑃     𝐺    𝑃          𝑦ሶ 𝐺
+
+
+                            Mind the 𝑃𝐺 distance
+
+
+
+
+                                          Error to the goal point
+                                                                                                                                                                         Kinematics and Motion control
+                     Summary
+                                                                                                                                                                                                                    34
+
+
+
+
+               ▪ Kinematics
+                        ▪ Types of drive: differential, Ackermann,
+                          omnidirectional, …
+                        ▪ Holomomic vs. non-holonomic systems/constraints
+                        ▪ Computing forward and angular velocity from
+                          speed of wheels (and vice versa)
+                        ▪ Forward and inverse kinematics
+                        ▪ Probabilistic motion models
+
+               ▪ Motion control / path following
+                        ▪ Path description
+                        ▪ PID controller                                                                                                                                                                                       [1]
+
+                        ▪ Pure pursuit tracking algorithm
+                        ▪ Feedback linearization
+
+
+1. SAHA, Anup. Path following robot woth artificial neural network [online]. 2015 [cit. 2022-02-19]. Available at: https://anupmec.wordpress.com/project/hands-on-robot/path-following-robot-with-artificial-neural-network/
+                                                  Kinematics and Motion control
+                                                                            35
+
+
+
+
+                Tomas Lazna
+            tomas.lazna@ceitec.vutbr.cz
+
+
+            Brno University of Technology
+Faculty of Electrical Engineering and Communication
+    Department of Control and Instrumentation
+
+
+
+
+            Robotics and AI Research Group
+

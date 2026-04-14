@@ -1,0 +1,5 @@
+mode,success_rate_pct,avg_steps_success,avg_path_rmse_m,collision_count,out_count
+waypoint_p,100,364.55,0.0210340718447215,0,0
+pure_pursuit,100,437.45,0.0711306833754367,0,0
+cross_track_pd,95,434,0.2816294991896,1,0
+stanley,75,488.2,0.357572140411455,5,0

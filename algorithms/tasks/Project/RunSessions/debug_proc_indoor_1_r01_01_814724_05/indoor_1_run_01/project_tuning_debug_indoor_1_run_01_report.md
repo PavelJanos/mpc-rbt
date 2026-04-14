@@ -1,0 +1,65 @@
+# Project tuning debug
+
+- mapa: `indoor_1`
+- repeat: `1`
+- start: `[9.200, 8.400, 0.265]`
+- cil: `[0.800, 0.800]`
+- timeout: `80` kroku
+- vysledek: `timeout`
+- kroky: `80`
+- final goal error: `11.141 m`
+- travelled: `0.397 m`
+- runtime: `7.567 s`
+
+## Maxima a minima
+
+- max XY localization error: `11.060 m`
+- max PF/EKF disagreement: `Inf m`
+- max PF dominant mass: `1.000`
+- max PF top ratio: `2.345`
+- max ambiguity counter: `6`
+- ambiguity active steps: `10`
+- min front lidar: `0.707 m`
+- max track stall steps: `NaN`
+- max scan mismatch counter: `NaN`
+- max map conflict counter: `NaN`
+- max path revision: `0`
+- max estimate jump: `10.754 m`
+- max contradiction counter: `0`
+- max no-progress counter: `0`
+- max trace-loop counter: `0`
+- max commit watchdog counter: `NaN`
+- max hard path distance counter: `NaN`
+- reseed attempts / successes: `NaN / NaN`
+- max reseed crisis score: `NaN`
+- max disambiguation goal switches: `NaN`
+- min path quality score: `NaN`
+- min trace bbox diag: `0.047 m`
+- final estimated goal distance: `11.225 m`
+- final true goal distance: `11.148 m`
+
+## Stavy
+
+- `disambiguate`: `23` kroku
+- `globalize`: `57` kroku
+
+## Nejcastejsi reasons
+
+- `pf_cluster_wide`: `64`
+- `ok`: `9`
+- `pf_cluster_very_wide`: `4`
+- `pf_cluster_medium`: `1`
+- `pf_weakly_unique`: `1`
+
+## Nejcastejsi transition reasons
+
+- `stay`: `79`
+- `localize_to_disambiguate_ambiguity`: `1`
+
+## Nejcastejsi forced replans
+
+- `none`: `80`
+
+## Nejcastejsi forced relocalize
+
+- `none`: `80`

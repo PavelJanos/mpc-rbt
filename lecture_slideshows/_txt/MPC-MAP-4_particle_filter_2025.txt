@@ -1,0 +1,578 @@
+4 – Particle filter
+Advanced Methods for Mapping and Self-localization in Robotics
+MPC-MAP
+
+
+
+
+Tomas Lazna
+Brno University of Technology
+2025
+                                                                                                                                                       Particle filter
+                    Motivation
+                                                                                                                                                                    2
+
+
+
+
+               What can a convenient localization algorithm offer?
+               ▪ Mutlimodality
+               ▪ Continuity
+
+               ▪ Intuitivness
+               ▪ Efficiency
+               ▪ Scalability
+
+
+
+
+                 PDF = Probability Density Function
+
+                                                                                                                                                                         [1]
+
+
+1. TRIEBEL, Rudolph. The Particle Filter. In: Machine Learning for Computer Vision [online]. Technische Universität München, 2017 [cit. 2021-02-19].
+   Available at:https://vision.in.tum.de/_media/teaching/ss2017/ml4cv/variationalinference.pdf
+                                                                                          Particle filter
+                    Monte Carlo methods
+                                                                                                       3
+
+
+
+
+              ▪ Numerical methods based on random sampling
+              ▪ Optimization, numerical intergration, drawing                            𝜋 ≈ 3.36
+                from PDFs, modeling
+
+              ▪ Law of large numbers
+              ▪ Estimating the 𝜋 value (Buffon‘s needle)
+              ▪ Particle filter = Sequential MC method                                   𝜋 ≈ 3.10
+
+
+
+
+                                                                                         𝜋 ≈ 3.13
+
+                                                                                   [1]
+1. Ceasars Slots. Casino Dice Games: The Complete List. Note: Illustrative photo
+                                                                                                                                                                                            Particle filter
+                    Introduction
+                                                                                                                                                                                                            4
+
+
+
+
+              ▪ Particle representation of a PDF                                                        𝑁
+                         𝝌=          𝒙(𝑖) , 𝑤 (𝑖)       𝑖=1,…,𝑁                         𝑝 𝒙 = ෍ 𝑤 𝑖 𝛿𝒙 𝑖 (𝒙)
+                                                                                                      𝑖=1
+         State hypothesis                          Belief (weight)
+                                                                                                    Dirac delta function
+              ▪ Bayes‘ theorem
+                           𝑃(𝐸|𝐻) ∙ 𝑃(𝐻)                                   H … hypothesis
+                    𝑃 𝐻𝐸 =
+                               𝑃(𝐸)                                                                                                                                                                                [1]
+                                                                          E … evidence
+              ▪ Particle filter applications:
+                       ▪ Robot localization
+                       ▪ Object tracking, computer vision
+                       ▪ General estimation in nonlinear systems
+
+              ▪ Original article (referred to as ‚bootstrap filter‘) [2]                                                                                                                                           [1]
+1. STACHNISS, Cyrill. Short Introduction to Particle Filters and Monte Carlo Localization [online]. Uni Freiburg, 2013 [cit. 2021-02-18].
+   Available at: http://ais.informatik.uni-freiburg.de/teaching/ws13/mapping/pdf/slam10-particle-filter-4.pdf
+2. GORDON, N.J. et al. Novel approach to nonlinear/non-Gaussian Bayesian state estimation. IEE Proceedings F Radar and Signal Processing [online]. 1993, 140(2) [cit. 2021-02-21]. DOI: 10.1049/ip-f-2.1993.0015
+                                                                                                                                                                  Particle filter
+                    Drawing random samples
+                                                                                                                                                                               5
+
+
+
+
+               ▪ Uniform distribution
+                        ▪ Any random number generator
+                        ▪ Usually a pseudorandom series
+                        ▪ Can be utilized for other PDFs
+                                                                                                                                                            [1]                     [2]
+               ▪ Normal distribution
+                        ▪ Parameric function
+                          (mean 𝜇, variance 𝜎 2 )
+                        ▪ Approximation by UD:
+                                         12
+
+                                𝑥 ← ෍ rand(−0.5𝜎, 0.5𝜎)
+                                        𝑖=1
+
+               ▪ Other distributions
+                        ▪ Parametric
+                        ▪ Non-parametric
+1. Continuous uniform distribution. Wikipedia, Wikimedia Foundation, 20 Dec 2020. Available at: https://en.wikipedia.org/wiki/Continuous_uniform_distribution
+2. Normal distribution. Wikipedia, Wikimedia Foundation, 13 Feb 2021. Available at: https://en.wikipedia.org/wiki/Normal_distribution
+                                  Particle filter
+  Rejection sampling
+                                               6
+
+
+
+
+▪ Generate random samples
+  [𝑦, 𝑓(𝑦)] in range:
+    ▪ 𝑦 ∈ 𝑥min ; 𝑥max
+    ▪ 𝑓(𝑦) ∈ (0; max(𝑝(𝑥))ۧ
+
+▪ Reject sample if:
+    ▪ 𝑓 𝑦 >𝑝 𝑦
+
+▪ The random variable 𝑌 is now
+  distributed according to 𝑝(𝑥)
+                                  Particle filter
+  Rejection sampling
+                                               7
+
+
+
+
+▪ Generate random samples
+  [𝑦, 𝑓(𝑦)] in range:
+    ▪ 𝑦 ∈ 𝑥min ; 𝑥max
+    ▪ 𝑓(𝑦) ∈ (0; max(𝑝(𝑥))ۧ
+
+▪ Reject sample if:
+    ▪ 𝑓 𝑦 >𝑝 𝑦
+
+▪ The random variable 𝑌 is now
+  distributed according to 𝑝(𝑥)
+▪ Tends to be inefficient
+                                                                                                                                                                                         Particle filter
+                   Importance sampling
+                                                                                                                                                                                                        8
+
+
+
+
+              ▪ Use other distribution 𝜋 that
+                is simple to draw from
+              ▪ Correct the difference between
+                the target distribution 𝑓 and
+                proposal 𝜋 by assigning
+                ‚weights‘ to random samples:
+                                    𝑓(𝑥)
+                     𝑤(𝑥) =
+                                    𝜋(𝑥)
+
+              ▪ To ensure samples are drawn from the whole target                                                               ▪ Other methods for drawing random samples
+                distribution, following condition needs to be met:                                                                      ▪ Adaptive rejection sampling [1]
+                     ∀𝑥 ∈ ℝ: 𝑓 𝑥 > 0 ⇒ 𝜋 𝑥 > 0                                                                                          ▪ Markov chain Monte Carlo (MCMC) methods,
+                                                                                                                                          e.g., Metropolis-Hastings algorithm [2]
+
+
+1. MARTINO, Luca and Joaquín MÍGUEZ. A generalization of the adaptive rejection sampling algorithm. Statistics and Computing [online]. 2011, 21(4). [cit. 2021-02-19]. DOI: 10.1007/s11222-010-9197-9
+2. CHIB, Siddhartha and Edward GREENBERG. Understanding the Metropolis-Hastings Algorithm. The American Statistician [online]. 1995, 49(4). [cit. 2021-02-19]. DOI: 10.1080/00031305.1995.10476177
+                                                                                                  Particle filter
+  Particle filter principle
+                                                                                                               9
+
+
+
+
+▪ Prediction step
+    ▪ State of all particles is updated in accordance
+                                                                           Prediction
+      with starting state and the input vector                                𝑥𝑡−1 → 𝑥𝑡
+    ▪ Goal: Estimate the state transition                                 𝑥𝑡 ~𝑝(𝑥𝑡 |𝑥𝑡−1 , 𝑢𝑡 )
+
+▪ Correction step
+    ▪ Particles‘ hypotheses are compared with
+      actual measurement
+    ▪ Goal: Find out which particles are the fittest
+
+▪ Resampling step
+                                                        Resampling                                Correction
+    ▪ Draw random samples from the previous                                                                     𝑖
+                                                         𝜒𝑡 ~[𝑥𝑡 , 𝑤𝑡 ]                   ∀ 𝑥, 𝑤 ∈ 𝜒: 𝑤𝑡            =
+      particle set with the probability given by
+                                                                                                     𝑖
+      weights                                            𝑝(𝑥𝑡 ) ∝ 𝑤𝑡                      = 𝑓 𝑥𝑡 , 𝑧𝑡 ∝ 𝑝(𝑧𝑡 |𝑥𝑡 )
+    ▪ Goal: Increase the particle density in more
+      probable parts of state space
+                                                                                                                                             Particle filter
+                   Particle filter example in 1D
+                                                                                                                                                        10
+
+
+
+
+        1. Initialization
+
+
+
+
+        2. Correction
+
+
+
+
+        3. Resampling
+
+                                                                                                                                       [1]
+
+1. THRUN, Sebastian, Wolfram BURGARD and Dieter FOX. Probabilistic robotics. Massachusetts: MIT Press, 2006. ISBN 978-0-262-20162-9.
+                                                                                                                                             Particle filter
+                   Particle filter example in 1D
+                                                                                                                                                         11
+
+
+
+
+        3. Resampling
+
+
+
+
+        4. Prediction
+
+
+
+
+        5. Correction
+
+
+
+                                                                                                                                       [1]
+
+1. THRUN, Sebastian, Wolfram BURGARD and Dieter FOX. Probabilistic robotics. Massachusetts: MIT Press, 2006. ISBN 978-0-262-20162-9.
+                                                                                                                                             Particle filter
+                   Particle filter example in 1D
+                                                                                                                                                        12
+
+
+
+
+        5. Correction
+
+
+
+
+        6. Resampling
+
+
+
+
+        7. Prediction
+
+                                                                                                                                       [1]
+
+1. THRUN, Sebastian, Wolfram BURGARD and Dieter FOX. Probabilistic robotics. Massachusetts: MIT Press, 2006. ISBN 978-0-262-20162-9.
+                                                                                                                                                               Particle filter
+                    Prediction
+                                                                                                                                                                          13
+
+
+
+
+               ▪ Predict state of the system after a control vector is applied
+               ▪ Increase variance of particles
+
+               ▪ Let us assume that the state transition depends on the
+                 previous state only (first order Markov Process)
+               ▪ The noise can have arbitrary distribution
+                                                (𝑖)             (𝑖)
+                                             𝒙𝑡 = 𝑓 𝒙𝑡−1 , 𝒖𝑡 , 𝑸
+                                                                                      Random variable – noise
+        Predicted state                                                                                                                                                          [1]
+                                                               Control vector
+                                  Original state
+
+               ▪ Example – omnidirectional drive                                                            Differential drive:
+                         𝑥𝑡   𝑥𝑡−1                                                                           𝒙𝑡 + 𝑸 ≠ 𝑓(𝒙𝑡−1 , 𝑔 𝒖𝑡 , 𝑸 )
+                                                                                                                                                        Prediction
+                                     𝑥ሶ
+                         𝑦𝑡 = 𝑦𝑡−1 + 𝑦ሶ ∆𝑡 + 𝑸                                                                                                             𝑥𝑡−1 → 𝑥𝑡
+                                                                                                                  where 𝑸 has
+                         𝜃𝑡   𝜃𝑡−1   𝜃ሶ                                                                           normal distribution                  𝑥𝑡 ~𝑝(𝑥𝑡 |𝑥𝑡−1 , 𝑢𝑡 )
+1. TRIEBEL, Rudolph. The Particle Filter. In: Machine Learning for Computer Vision [online]. Technische Universität München, 2017 [cit. 2021-02-19].
+   Available at: https://vision.in.tum.de/_media/teaching/ss2017/ml4cv/variationalinference.pdf
+                                                                                                 Particle filter
+  Correction
+                                                                                                            14
+
+
+
+                                                                   Unnormalized weight
+▪ Application of Bayes‘ rule                                                                    𝜇 = measured distance
+    ▪ Prior: all particles have the same weight 1 / N
+    ▪ Posterior: proportional to the measurement model
+
+▪ Weights should be normalized
+▪ Examples for rangefinders:
+    ▪ Using normal distribution (𝜎)
+               𝑀
+              1 𝑑𝑚 −𝑝𝑚 2
+             −
+        𝑤∝ ෑ𝑒 2 𝜎
+              𝑚=1
+                                                           Predicted distance
+    ▪ Using Euclidean distance
+                       1                           d … measured distance                 Correction
+        𝑤∝                                         p … predicted distance                               𝑖
+                                                                                     ∀ 𝑥, 𝑤 ∈ 𝜒: 𝑤𝑡         =
+               σ𝑀
+                𝑚=1(𝑑𝑚 − 𝑝𝑚 )
+                             2
+                                                   M … number of measurements               𝑖
+                                                                                     = 𝑓 𝑥𝑡 , 𝑧𝑡 ∝ 𝑝(𝑧𝑡 |𝑥𝑡 )
+                                                                                                                                                                   Particle filter
+                     Resampling
+                                                                                                                                                                               15
+
+
+
+
+               ▪ Increase density of particles in regions of high
+                 posterior probability and vice versa
+               ▪ Needed in case of limited number of samples
+
+               ▪ Draw N particles with the probability given
+                 by weights of original set                                                                                                                                          [1]
+                                                                                                                                            Roulette wheel          Systematic
+               ▪ General algorithm:
+                        1. Generate sorted set of N random numbers 𝑢𝑘 in range ‫ۦ‬0, 1)
+                        2. Compute cummulative sum of weights
+                        3. For each 𝑢𝑘 pick particle 𝑥𝑖 according to condition:
+
+                                                𝑖−1             𝑖
+
+                                   𝑢𝑘 ∈ ൾ෍ 𝑤𝑠 , ෍ 𝑤𝑠 ቍ
+                                                                                                                                                             Resampling
+                                                𝑠=1          𝑠=1                                                                                              𝜒𝑡 ~[𝑥𝑡 , 𝑤𝑡 ]
+                                                                                                                                                              𝑝(𝑥𝑡 ) ∝ 𝑤𝑡
+1. STACHNISS, Cyrill. Short Introduction to Particle Filters and Monte Carlo Localization [online]. Uni Freiburg, 2013 [cit. 2021-02-18].
+   Available at: http://ais.informatik.uni-freiburg.de/teaching/ws13/mapping/pdf/slam10-particle-filter-4.pdf
+                                                                                                                                                                 Particle filter
+                   Resampling – algorithms
+                                                                                                                                                                            16
+
+
+
+
+              ▪ Low variance systematic resampling                                                            ▪ Thrun‘s heuristic algorithm
+                      ▪ Only one iteration through the weights set                                                     ▪ Higher degree of randomness
+                      ▪ Keeps particles of even weights alive                                                          ▪ Easy implementation
+                                                                                            1
+                      ▪ Generate random number 𝑢෤ in range 0,
+                                                                                            𝑁
+                                                                                                                   1      index = rand(0, N-1)
+                                         𝑘 − 1 + 𝑢෤
+                               𝑢𝑘 =                                                                                2      for i = 1 to N do
+                                             𝑁
+                                                                                                                   3              beta = rand(0, 2wmax)
+                                                                                                                   4              while w[index] < beta
+                                                                                         [1]                       5                   beta = beta – w[index]
+                                                                                                                   6                   index++
+                                                                                                                   7                   if index > N
+                                                                                                                   8                        index = 1
+                                                                                                                   9              new_particles[i] = particles[index]
+
+
+1. THRUN, Sebastian, Wolfram BURGARD and Dieter FOX. Probabilistic robotics. Massachusetts: MIT Press, 2006. ISBN 978-0-262-20162-9.
+                                                                                                                                                                                    Particle filter
+                   Particle filter example in 2D
+                                                                                                                                                                                               17
+
+
+
+
+ 1. Initialization                                                                                                2. Prediction
+                                                                                                                                                                                                      [1]
+
+1. BURGARD, Wolfram, Cyrill STACHNISS, Maren BENNEWITZ and Kai ARRAS. Bayes Filter – Particle Filter and Monte Carlo Localization [online]. Uni Freiburg, 2011 [cit. 2024-02-20].
+   Available at: http://ais.informatik.uni-freiburg.de/teaching/ss11/robotics/slides/11-pf-mcl.ppt.pdf
+                                                                                                                                                                                    Particle filter
+                   Particle filter example in 2D
+                                                                                                                                                                                               18
+
+
+
+
+ 3. Observation                                                                                                   4. Weighting
+                                                                                                                                                                                                      [1]
+
+1. BURGARD, Wolfram, Cyrill STACHNISS, Maren BENNEWITZ and Kai ARRAS. Bayes Filter – Particle Filter and Monte Carlo Localization [online]. Uni Freiburg, 2011 [cit. 2024-02-20].
+   Available at: http://ais.informatik.uni-freiburg.de/teaching/ss11/robotics/slides/11-pf-mcl.ppt.pdf
+                                                                                                                                                                                    Particle filter
+                   Particle filter example in 2D
+                                                                                                                                                                                               19
+
+
+
+
+ 5. Resampling                                                                                                    6. Prediction
+                                                                                                                                                                                                      [1]
+
+1. BURGARD, Wolfram, Cyrill STACHNISS, Maren BENNEWITZ and Kai ARRAS. Bayes Filter – Particle Filter and Monte Carlo Localization [online]. Uni Freiburg, 2011 [cit. 2024-02-20].
+   Available at: http://ais.informatik.uni-freiburg.de/teaching/ss11/robotics/slides/11-pf-mcl.ppt.pdf
+                                                                                                                                                                                    Particle filter
+                   Particle filter example in 2D
+                                                                                                                                                                                               20
+
+
+
+
+ 7. Observation                                                                                                   8. Weighting
+                                                                                                                                                                                                      [1]
+
+1. BURGARD, Wolfram, Cyrill STACHNISS, Maren BENNEWITZ and Kai ARRAS. Bayes Filter – Particle Filter and Monte Carlo Localization [online]. Uni Freiburg, 2011 [cit. 2024-02-20].
+   Available at: http://ais.informatik.uni-freiburg.de/teaching/ss11/robotics/slides/11-pf-mcl.ppt.pdf
+                                                                                                                                                                                    Particle filter
+                   Particle filter example in 2D
+                                                                                                                                                                                               21
+
+
+
+
+ 9. Resampling                                                                                                    10. Prediction
+                                                                                                                                                                                                      [1]
+
+1. BURGARD, Wolfram, Cyrill STACHNISS, Maren BENNEWITZ and Kai ARRAS. Bayes Filter – Particle Filter and Monte Carlo Localization [online]. Uni Freiburg, 2011 [cit. 2024-02-20].
+   Available at: http://ais.informatik.uni-freiburg.de/teaching/ss11/robotics/slides/11-pf-mcl.ppt.pdf
+                                                                                                                                                                                    Particle filter
+                   Particle filter example in 2D
+                                                                                                                                                                                               22
+
+
+
+
+ 11. Observation                                                                                                  12. Weighting
+                                                                                                                                                                                                      [1]
+
+1. BURGARD, Wolfram, Cyrill STACHNISS, Maren BENNEWITZ and Kai ARRAS. Bayes Filter – Particle Filter and Monte Carlo Localization [online]. Uni Freiburg, 2011 [cit. 2024-02-20].
+   Available at: http://ais.informatik.uni-freiburg.de/teaching/ss11/robotics/slides/11-pf-mcl.ppt.pdf
+                                                                                                                                                                                    Particle filter
+                   Particle filter example in 2D
+                                                                                                                                                                                               23
+
+
+
+
+ 13. Resampling                                                                                                   14. Prediction
+                                                                                                                                                                                                      [1]
+
+1. BURGARD, Wolfram, Cyrill STACHNISS, Maren BENNEWITZ and Kai ARRAS. Bayes Filter – Particle Filter and Monte Carlo Localization [online]. Uni Freiburg, 2011 [cit. 2024-02-20].
+   Available at: http://ais.informatik.uni-freiburg.de/teaching/ss11/robotics/slides/11-pf-mcl.ppt.pdf
+                                                                                             Particle filter
+Particle filter in pseudocode
+                                                                                                        24
+
+
+Particle_filter(𝝌𝒕−𝟏 , 𝒖𝒕 , 𝒛𝒕 ):
+1      𝜒ഥ𝑡 = 𝜒𝑡 = ∅
+2      for n = 1 to N do
+3                           (𝑛)             (𝑛)   prediction step
+             sample 𝑥𝑡 ~𝑝 𝑥𝑡 |𝑢𝑡 , 𝑥𝑡−1
+4              (𝑚)                 (𝑛)            compute weight (correction)
+             𝑤𝑡      = 𝑝 𝑧𝑡 |𝑥𝑡
+5                      (𝑛)        (𝑚)             keep list of weighted original particles
+             𝜒ഥ𝑡 ← 𝑥𝑡 , 𝑤𝑡
+6      r = rand(0, 1/N)                           low variance resampling algorithm
+7             (1)
+       𝑐 = 𝑤𝑡 , 𝑖 = 1
+8      for n = 1 to N do
+9            𝑢 = 𝑟 + 𝑛 − 1 /𝑁
+10           while u > c
+11                                  (++𝑖)
+                     𝑐 = 𝑐 + 𝑤𝑡
+12                    (𝑖)
+             𝜒𝑡 ← 𝑥𝑡
+13     return 𝜒𝑡
+                                                                                                                                                                                                   Particle filter
+                    Particle degeneracy
+                                                                                                                                                                                                                  25
+
+
+
+
+               ▪ Each resampling step results in so-called particle
+                 degeneracy and impoverishment
+               ▪ Particles with low probability are eliminated while
+                 particles with large weights are exist in too many copies
+
+               ▪ How to address the degeneracy issue?
+                        ▪ It is essential to increase the variance of the particle set                                                                                                                                            [1]
+
+                        ▪ Intensify noise in the prediction step
+                        ▪ Do not resample in each iteration
+                        ▪ Add Gaussin noise in the resampling step
+                          (= regularized particle filters [2])
+                                   (𝑖)          (𝑖)
+                                𝑥𝑡 = 𝑥𝑡 + ℎΓ𝑡 𝜀                                      ℎ                 … Bandwidth
+                                                                                     Γ𝑡                … Square root of empirical covariance matrix
+                                                                                     𝜀                 … Random vector drawn from Gaussian kernel
+
+1. LI, Tiancheng et al. Fight sample degeneracy and impoverishment in particle filters: A review of intelligent approaches. Expert Systems with Applications [online]. 2014, 41(8) [cit. 2021-02-21]. DOI: 10.1016/j.eswa.2013.12.031
+2. MUSSO, Christian et al. Improving Regularised Particle Filters. Sequential Monte Carlo Methods in Practice [online]. New York, NY: Springer New York, 2001 [cit. 2021-02-21]. DOI: 10.1007/978-1-4757-3437-9_12
+                                                                          Particle filter
+                    Kidnapped robot problem
+                                                                                     26
+
+
+
+
+              ▪ Robot is relocated by some unpredictable intervention
+              ▪ The localitazion algorithm converges to a wrong
+                location due to similarity of different parts of a map
+
+              ▪ Tests the robustness of the localization solution                           [1]
+
+              ▪ Possible approaches for the particle filter:
+                       ▪ Assessing the quality of localization
+                                ▪ Sample covariance matrix
+                                ▪ Error function (unnormalized weights)
+                       ▪ Reset the filter (re-initialize the particles)
+                       ▪ Injection of random particles
+                                ▪ Fixed rate
+                                ▪ Adaptive rate
+
+
+
+1. https://cz.pinterest.com/pin/497507090058081626/ [cit. 2024-02-20]
+                                                                                             Particle filter
+                    Summary
+                                                                                                        27
+
+
+
+
+              ▪ Particle filter
+                       ▪ Non-parametric recursive Bayes filter
+                       ▪ Approximates the posterior by weighted samples
+                       ▪ Can handle non-Gaussian PDFs and non-linear transitions
+                       ▪ Basic principles: Importance sampling and Survival-of-the-fittest
+
+              ▪ Monte Carlo localization (MCL)
+                       ▪ Based on the particle filter
+                       ▪ Prediction: Applying the motion model to particles
+                       ▪ Correction: Likelihood of observations                                                [1]
+                       ▪ Easy implementation
+                       ▪ Accuracy and robustness depends on the quality
+                         of motion and measurement models
+                       ▪ Standard for mobile robots localization
+
+1. I, robot [film]. Directed by PROYAS, Alex. USA: 20th Century Fox, 2004.
+                                                      Particle filter
+                                                                 28
+
+
+
+
+                Tomas Lazna
+            tomas.lazna@ceitec.vutbr.cz
+
+
+            Brno University of Technology
+Faculty of Electrical Engineering and Communication
+    Department of Control and Instrumentation
+
+
+
+
+            Robotics and AI Research Group
+

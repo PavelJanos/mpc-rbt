@@ -1,0 +1,706 @@
+6 – Path planning
+Advanced Methods for Mapping and Self-localization in Robotics
+MPC-MAP
+
+
+
+
+Tomas Lazna
+Brno University of Technology
+2025
+                                                                                                                                                                                             Path planning
+                     Motivation
+                                                                                                                                                                                                                   2
+
+
+
+
+                ▪ What is path planning for?
+                         ▪ Map, obstacles
+                         ▪ Self-localization
+                         ▪ Where to go?
+                         ▪ How to get there?
+                         ▪ What is the best way?
+                         ▪ What robot do I have?
+
+
+
+                ▪ Path planning ≈ motion planning                                                                                                                                                                         [1]
+
+
+
+
+1.   DAHDOUH, Andrew. Graph-Based Path Planning: Dijkstra’s Algorithm. In: Reality Bytes [online] 2017 [cit. 2021-02-26]. Available at: https://realitybytes.blog/2017/07/11/graph-based-path-planning-dijkstras-algorithm/
+                                                                                                                                                                                     Path planning
+                    Introduction
+                                                                                                                                                                                                 3
+
+
+
+
+              ▪ Configuration
+                       ▪ A complete specification of the position of every
+                         point in the system
+
+              ▪ Cofiguration space = C-space
+                       ▪ Space of all possible configurations
+                       ▪ A manifold in higher-dimension Cartesian space                                                                                                                              [1]
+
+              ▪ C-obstacle
+                       ▪ Set of configurations where the robot collides
+                         with a workspace obstacle or with itself
+
+              ▪ Free configuration
+                       ▪ Null intersection of the configuration with
+                         workspace obstacles
+                                                                                                                                                                                                           [2]
+                       ▪ Semi-free = config. touches an obstacle
+1. ATANASOV, Nikolay. Lecture 5: Configuration space [online]. UC San Diego, 2018 [cit. 2021-02-28]. Available at: https://natanaso.github.io/ece276b2018/ref/ECE276B_5_ConfigurationSpace.pdf
+2. https://www.cs.cmu.edu/~motionplanning/lecture/Chap3-Config-Space_howie.pdf
+                                                                                            Path planning
+  Introduction
+                                                                                                        4
+
+
+
+
+▪ Inputs
+    ▪ Initial and goal configurations
+    ▪ Workspace representation and obstacles
+    ▪ Allowed actions with associated costs
+    ▪ (Geometric) Description of robot
+
+▪ Outputs
+    ▪ Collistion-free sequence of configurations
+      (optimality: the shortest / the fastest / the least comptutationally demanding / …)
+    ▪ Cost of the sequence
+                                                                                                                                                          Path planning
+                    Types of robots
+                                                                                                                                                                      5
+
+
+
+
+               ▪ Rigid vs. articulated robots
+                        ▪ Rigid: all parts of a robot have constant mutual
+                          positions
+                                 ▪ Mobile robots with differential drive
+                                 ▪ Unmanned aircraft systems (drones)                                                                                                     [1]
+                        ▪ Articulated: A robot consist of parts connected
+                          by rotary joints
+                                 ▪ Industrial manipulators
+                                 ▪ Legged robots
+
+
+
+
+                                                                                                                                                    [2]
+
+                                                                                                                                                                          [3]
+
+1. https://www.djitelink.cz/matrice-350-rtk-1y-2x-aku-nabijeci-stanice-p23160/
+2. What is a robot manipulator? [online]. RobotWorx, 2021 [cit. 2021-02-28]. Available at: https://www.robots.com/faq/what-is-a-robot-manipulator
+3. https://fintelics.medium.com/boston-dynamics-atlas-the-most-dynamic-humanoid-robot-249278fd8205
+                                                                                                                                                                                        Path planning
+                    Types of robots
+                                                                                                                                                                                                      6
+
+
+
+
+              ▪ Holonomic vs. nonholonomic robots
+                       ▪ Holonomic: Has the same or higher number of controllable
+                         DOFs than their total number in configuration space
+                                ▪ Robots with omnidirectional drive
+                       ▪ Nonholonomic: lower number of controllable DOFs                                                                                                                              [1]
+                                ▪ Cars (Ackermann drive)
+
+
+
+
+                                                                                                                                                                                                            [2]
+
+1. Robotics Lab [online]. Nairi-Tech, 2014 [cit. 2021-02-28]. Available at: http://nairi-tech.com/products/view/robotics-lab.html
+2. LATOMBE, Jean-Claude. Class #12: Nonholonomic planning [online]. Stanford University, 2009 [cit. 2021-02-28]. Available at: http://robotics.stanford.edu/~latombe/cs326/2009/class12/class12.htm
+                                                                                                                                                                                      Path planning
+                    Types of planning
+                                                                                                                                                                                                              7
+
+
+
+
+              ▪ Local planners
+                       ▪ Are limited by range of sensors
+                       ▪ Provide a direction to move in
+                       ▪ Do not guarantee finding the goal
+
+              ▪ Global planners
+                       ▪ Work with the whole configuration space                                                                                           [1]
+
+                       ▪ Provide complete path to the goal                                                                                                                                                        [2]
+                       ▪ Find an optimal solution
+
+              ▪ Stochastic planners
+                       ▪ Monte Carlo methods
+                       ▪ Fast (especially in higher dimensions)
+                       ▪ Not suitable for all scenarios
+                       ▪ Does not find an optimal path
+1. BORENSTEIN, J. and Y. KOREN. The vector field histogram-fast obstacle avoidance for mobile robots. IEEE Transactions on Robotics and Automation [online]. 7(3), [cit. 2021-02-28]. DOI: 10.1109/70.88137
+2. SVEGLIATO, Justin. How does a robot plan a path using RRT? 2020 [cit. 2021-02-28]. Available at: https://towardsdatascience.com/how-does-a-robot-plan-a-path-in-its-environment-b8e9519c738b
+                                                                                                                                                                                         Path planning
+                    Workspace representation
+                                                                                                                                                                                                                  8
+
+
+                                                                                                                                           [1]
+
+              ▪ Types of maps
+                       ▪ Continuous vs. discrete
+                       ▪ Metric vs. topological
+                       ▪ Planning algorithm are designed to search
+                         in a graph (topological map)
+
+
+
+
+                                                                                                        [2]
+
+
+
+1. BEEVERS, Kris and Wesley H. HUANG. Topological mapping with sensing-limited robots. [online]. Rensselaer Polytechnic Institute, 2005 [cit. 2021-02-28]. Available at: http://cs.krisbeevers.com/mapping.html
+2. Dijkstra’s shortest path algorithm | Greedy Algo-7. In: GeeksforGeeks [online]. 2020 [cit. 2021-02-28]. Available at: https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-greedy-algo-7/
+                                                                                                                                                                                  Path planning
+                   Workspace representation
+                                                                                                                                                                                                       9
+
+
+
+
+              Converting maps to graphs
+              ▪ Continuous → discrete
+                      ▪ Choose a cell size
+                      ▪ Cells with not-null intersection with an
+                        obstacle are occupied and vice versa
+                      ▪ Occupancy grid is created
+
+              ▪ Discrete → graph
+                      ▪ Cell adjacency graph
+                      ▪ 4-connected or 8-connected
+                                                                                                                                                      [1]
+              ▪ Continuous → graph
+                      ▪ Visibility graph
+                      ▪ Voronoi diagrams
+                                                                                                                                                                                                                [2]
+1. DE OLIVEIRA, Guilherme, Kevin DE CARVALHO and Alexandre BRANDÃO. A Hybrid Path-Planning Strategy for Mobile Robots with Limited Sensor Capabilities. Sensors [online]. 2019, 19(5) [cit. 2021-02-28]. DOI:
+   10.3390/s19051049
+2. KONERU, Haarika. Visibility graphs [online]. Kent State University, 2016 [cit. 2021-02-28]. Available at: http://www.cs.kent.edu/~dragan/ST-Spring2016/visibility%20graphs.pdf
+                                                                                   Path planning
+  Attributes of planners
+                                                                                              10
+
+
+
+
+▪ Measuring the performance of search algorithms
+    ▪ Completeness: If there is a solution, it is found
+    ▪ Optimality: The provided solution is the best in terms of some criterion
+    ▪ Time complexity: Time required to find the solution
+    ▪ Space complexity: Memory and/or other assets required to find the solution
+
+
+▪ What other attributes do we require?
+    ▪ Take uncertainties into account
+    ▪ React to dynamic obstacles quickly
+    ▪ Guarantee safety
+                                                                                                                                                                                              Path planning
+                     Layered architecture
+                                                                                                                                                                                                                   11
+
+
+
+
+                                                                                                                                                                                       [1]
+
+
+1. BURGARD, Wolfram et al. Path Planning and Collistion Avoidance [online]. Uni Freiburg, 2010 [cit. 2021-02-27]. Available at: http://ais.informatik.uni-freiburg.de/teaching/ss10/robotics/slides/16-pathplanning.pdf
+                                                                                   Path planning
+Graph search – general algorithm
+                                                                                              12
+
+
+
+1    𝑄. 𝐼𝑛𝑠𝑒𝑟𝑡 𝑥0                                 𝑄      Priority queue
+2    𝑥0 . 𝑣𝑖𝑠𝑖𝑡𝑒𝑑 = true                          𝑥0     Initial state
+3    while length(Q) > 0 do                      𝑋𝐺      Set of goal states
+4        𝑥 = 𝑄. 𝐺𝑒𝑡𝐹𝑖𝑟𝑠𝑡()                       𝑥, 𝑥′   States
+5        if 𝑥 ∈ 𝑋𝐺                                𝑢      State transition
+6             return SUCCESS                    𝑈(𝑥)     Set of all transitions in state 𝑥
+7        foreach 𝑢 ∈ 𝑈(𝑥)
+8             𝑥 ′ = 𝑓(𝑥, 𝑢)                     Various planners differ especially in a
+9             if ! 𝑥′. 𝑣𝑖𝑠𝑖𝑡𝑒𝑑                  type of the employed priority queue Q
+                                                and a mechanism for resolving state
+10                   𝑥′. 𝑣𝑖𝑠𝑖𝑡𝑒𝑑 = true         conflicts (line 13).
+11                   𝑄. 𝐼𝑛𝑠𝑒𝑟𝑡 𝑥′
+12            else
+13                   Resolve duplicity of 𝑥 ′
+14   return FAILURE
+                                                                              Path planning
+  Types of states
+                                                                                         13
+
+
+
+
+▪ Unvisited
+    ▪ This state has not been encountered yet
+
+▪ Dead (Closed)
+    ▪ Has been visited, and every possible next state has also been visited
+    ▪ Can no longer contribute to the search
+    ▪ State picked from the priority queue
+
+▪ Alive (Open)
+    ▪ Has been visited, but possibly has unvisited next states
+    ▪ State is in the priority queue
+                                                                                                                                                                                         Path planning
+                    Uninformed search
+                                                                                                                                                                                                              14
+
+
+
+
+               ▪ No information on goal is provided
+               ▪ Configuration space is systematically explored until a goal is encountered
+
+               ▪ Breadth-first search                                                                                 ▪ Depth-first search
+                       ▪ A FIFO type priority queue → all states in depth                                                      ▪ A LIFO type priority queue → whole branch is explored
+                         𝑘 are explored before those in depth 𝑘 + 1                                                              to the end of graph before a new branch is opened
+                       ▪ Complete                                                                                              ▪ Not complete in infinite C-spaces
+                       ▪ Optimal in case of equal transition costs                                                             ▪ Not optimal
+
+
+
+
+                                                                                       [1]                                                                                                         [1]
+1. ZALTSMAN, Daniel. Difference between Depth First Search and Breadth First Search. [online]. 2020 [cit. 2021-02-27]. Available at: https://dev.to/danimal92/difference-between-depth-first-search-and-breadth-first-search-6om
+                                                                                             Path planning
+  Assigning costs to transitions
+                                                                                                             15
+
+
+
+                                                                                9            6   7   8
+▪ Some actions can be more „expansive“ than others                              8            5       7
+  in terms of complexity
+                                                                                7            4       6
+▪ Examples:                                                                 7   6    5   4   3   4   5       6
+    ▪ It takes more energy to go up a steep slope
+                                                                                7            2
+    ▪ It is possible to go faster on a road than on an agricultural field
+                                                                                8            1
+    ▪ Turning right takes less time than turning left in city traffic
+                                                                                9            0
+▪ To represent such circumstences, we can assign
+  various costs to:
+                                                                                             1
+    ▪ Graph edges (what is the cost of going to adjacent cell)
+    ▪ Actions (what are the costs of different operations
+      performed by a robot)
+                                                                                20                       2
+                                                                          Path planning
+  Assigning costs to transitions
+                                                                                     16
+
+
+
+
+▪ Example: expansive left turns
+
+
+
+                                                       6   8    9
+
+                                                       5        11               1
+
+                                                       4        12
+
+   26   25   24   23   3           20   19   18   17   3   15   13   20                   2
+                       2                               2
+
+                       1                               1
+
+                       0                               0
+                                                                                                                                                                                              Path planning
+                     Greedy search, Dijkstra‘s algorithm
+                                                                                                                                                                                                          17
+
+
+
+
+               ▪ The priority queue is ordered by the cost function
+                 𝑔(𝑥) (aka cost-to-come)
+               ▪ Cost function of a state is equal to sum of costs of all
+                 transitions and actions necessary to reach the state
+                 from the initial configuration                                                                                                                                                                [1]
+                                       𝑛−1
+
+                      𝑔 𝑥𝑛 = ෍ 𝐶(𝑥𝑖 → 𝑥𝑖+1 )
+                                       𝑖=0
+
+               ▪ Each explored state is assigned value of cost function
+                 and respective action the state has been reached
+
+               ▪ If an alive state is revisited more efficiently, its
+                 corresponding cost function and action are updated
+                 (dead states are ignored)
+
+1. Dijkstra’s shortest path algorithm | Greedy Algo-7. In: GeeksforGeeks [online]. 2020 [cit. 2021-02-28]. Available at: https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-greedy-algo-7/
+                                                                                                                                                                                              Path planning
+                     Greedy search, Dijkstra‘s algorithm
+                                                                                                                                                                                                           18
+
+
+
+
+               ▪ The priority queue is ordered by the cost function
+                 𝑔(𝑥) (aka cost-to-come)
+               ▪ Dijkstra‘s algorithm = full graph is expanded →
+                 optimal path from one state to each other
+                                                                                                                                                                                                                     [1]
+
+
+
+
+                                                                                                                                                               4                       12                 25
+                                                                                                                                                                                                          19
+                                                                                                                                                               A                       B                  CF
+
+
+                                                                                                                                                                                       14
+                                                                                                                                                                                       15                       21
+                                                                                                                                            0
+                                                                                                                                                                                       C
+                                                                                                                                                                                       H                        F
+
+
+                                                                                                                                                               8                        9                 11
+                                                                                                                                                               A                        H                 G
+
+1. Dijkstra’s shortest path algorithm | Greedy Algo-7. In: GeeksforGeeks [online]. 2020 [cit. 2021-02-28]. Available at: https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-greedy-algo-7/
+                                                                                                                                      Path planning
+                    Informed search – A* algorithm
+                                                                                                                                                  19
+
+
+
+
+               ▪ A heuristic function ℎ(𝑥) is introduced (aka cost-to-go) –
+                 an underestimated guess of cost necessary to reach
+                 the goal, e.g., Euclidean distance ℎ 𝑥𝑛 = 𝑥𝐺 − 𝑥𝑛
+               ▪ The priority queue is ordered by function
+                                   𝑓 𝑥 =𝑔 𝑥 +ℎ 𝑥
+               ▪ Revisited states: Same as Dijkstra
+                                                                                                                                                       [1]
+                                                                                                                                 0
+               ▪ States closer to the goal are preferred in the exploration
+                                                                                                                                10
+                 → smaller part of the graph is explored compared to the                                                                           3
+                                                                                                                                                   9
+                 greedy search                                                                                              6
+                                                                                                                           14             4
+                                                                                                                                          9             10
+                                                                                                                                                         9
+               ▪ Critical condition to ensure optimality: ∀𝑥: ℎ 𝑥                                               ≤ ℎ∗ (𝑥)                                13
+                                                                                                                                                        12
+                 where ℎ∗ (𝑥) is the actual cost from 𝑥 to the goal                                                                           7
+                                                                                                                                              8
+               ▪ Works only for non-negative edges
+                                                                                                                                     10
+1. SINGHAL, Akshay. A* Algorithm | A* Algorithm Example in AI. In: Gate Vidyalay [online]. 2020 [cit. 2021-02-28].                   10
+   Available at: https://www.gatevidyalay.com/a-algorithm-a-algorithm-example-in-ai/
+                                                                                                                                                                               Path planning
+                     Dijkstra vs. A* – comparison
+                                                                                                                                                                                          20
+
+
+
+
+               ▪ A*                                                                                                        ▪ Dijkstra
+                        ▪ Informed search – use of heuristics                                                                       ▪ Uniformed search
+                        ▪ Finds optimal sequence between                                                                            ▪ Find optimal sequence between one
+                          two configurations                                                                                          and all other configurations
+                        ▪ What is the best heuristics?                                                                              ▪ The most accurate estimate for the A*
+
+
+
+
+                                                                                                                                                                               [1]
+1. A* (A star) vs Dijkstra's algorithm pathfinding grid visualization - JavaScript. In: YouTube [online]. 2018 [cit. 2021-02-27]. Available at: https://youtu.be/9REexHx0hDY
+                                                                          Path planning
+  Notes on the A*
+                                                                                     21
+
+
+
+
+▪ Possible problems
+    ▪ Robot is not localized correctly
+    ▪ The shortest path is usually found in the vicinity of obstacles
+    ▪ Trajectory is aligned with the grid structure
+
+▪ Best-first (greedy) search
+    ▪ Uses only the heuristics (cost-to-go) to order the priority queue
+    ▪ Does not guarantee optimal solution
+    ▪ Can be faster than A* but provides generally worse results –
+      one has to pay for being too greedy
+                           Path planning
+A* – examples
+                                      22
+
+
+
+                Grass              Grass = 1
+                Forest             Forest = 3
+                Sand               Sand = 5
+                Rocks              Rocks = Inf
+                Water              Water = Inf
+                Crossing           Crossing = 6
+                Bridge             Bridge = 2
+
+                Start              Start
+                Goal               Goal
+
+                                   Visited
+
+                                   Path
+                               Path planning
+A* – examples
+                                          23
+
+
+
+                Grass = 1              Grass = 1
+                Forest = 3             Forest = 3
+                Sand = 7               Sand = 5
+                Rocks = Inf            Rocks = Inf
+                Water = Inf            Water = Inf
+                Crossing = 6           Crossing = 8
+                Bridge = 2             Bridge = 2
+
+                Start                  Start
+                Goal                   Goal
+
+                Visited                Visited
+
+                Path                   Path
+                               Path planning
+A* – examples
+                                          24
+
+
+
+                Grass = 1              Grass = 1
+                Forest = 1.5           Forest = 3
+                Sand = 5               Sand = 5
+                Rocks = Inf            Rocks = 3
+                Water = Inf            Water = Inf
+                Crossing = 8           Crossing = 8
+                Bridge = 2             Bridge = 2
+
+                Start                  Start
+                Goal                   Goal
+
+                Visited                Visited
+
+                Path                   Path
+                                                                                                                                                                                              Path planning
+                     Keeping clearance from obstacles
+                                                                                                                                                                                                                   25
+
+
+
+
+               ▪ Dilating obstacles                                                                                      ▪ Applying convolution
+                        ▪ Works well in open spaces                                                                               ▪ Keeps passages open
+                        ▪ Inconvenient for narrow passages                                                                        ▪ Cells closer to obstacles have higher cost
+                                                                                                                                  ▪ Disk-shaped or diamond-shaped kernel
+
+
+
+
+                                                                                                                                                                                                                          [1]
+
+
+
+
+1. BURGARD, Wolfram et al. Path Planning and Collistion Avoidance [online]. Uni Freiburg, 2010 [cit. 2021-02-27]. Available at: http://ais.informatik.uni-freiburg.de/teaching/ss10/robotics/slides/16-pathplanning.pdf
+                                                                                              Path planning
+  Dynamic programming
+                                                                                                         26
+
+
+                                               Input: map, value (>> 0), policy (= null), actions, goal, cost_step
+                                               1    value[goal[1]][goal[2]] = 0
+▪ A way to deal with stochastic environments
+                                               2    change = true
+▪ For each cell, a value is computed and       3    while change do
+  optimal policy is set
+                                               4         change = false
+▪ Iterative process                            5         foreach (x, y) st. map[x][y] is empty
+                                               6              foreach a in actions
+                                               7                    x2 = x + a[1]
+                                               8                    y2 = y + a[2]
+                                               9                    if (x2, y2) is in range && map[x2][y2] is empty
+                                               10                         v2 = value[x2][y2] + cost_step
+                                               11                         if v2 < value[x][y]
+                                               12                                 change = true
+                                               13                                 value[x][y] = v2
+                                               14                                 policy[x][y] = a
+                                                                                              Path planning
+  Dynamic programming
+                                                                                                         27
+
+
+                                               Input: map, value (>> 0), policy (= null), actions, goal, cost_step
+                                               1    value[goal[1]][goal[2]] = 0
+▪ A way to deal with stochastic environments
+                                               2    change = true
+▪ For each cell, a value is computed and       3    while change do
+  optimal policy is set
+                                               4         change = false
+▪ Iterative process                            5         foreach (x, y) st. map[x][y] is empty
+                                               6              foreach a in actions
+                                               7                    x2 = x + a[1]
+                                               8                    y2 = y + a[2]
+                                               9                    if (x2, y2) is in range && map[x2][y2] is empty
+                                               10                         v2 = value[x2][y2] + cost_step
+                                               11                         if v2 < value[x][y]
+                                               12                                 change = true
+                                               13                                 value[x][y] = v2
+                                               14                                 policy[x][y] = a
+                                                                                 Path planning
+  Dynamic programming – stochastic
+                                                                                             28
+
+
+
+                                                                   50 %
+▪ Why not use Dijktra to compute the values?
+                                                                                     50     20    10
+▪ Iterative approach can be extended to take the
+  uncertainty of motion into account (stochastic actions)   25 %          25 %       50           10
+
+▪ DP with stochastic actions keeps obstacle clearance                                50     20    10
+
+
+                                                                   50 %
+                                                                                          𝑉UP = 1 +
+                                                                                          50 % ∙ 20 +
+                                                                                          25 % ∙ 50 +
+                                                            25 %          25 %            25 % ∙ 10 = 26
+                                                                                       𝑉RIGHT = 1 +
+                                                                                       50 % ∙ 10 +
+                                                                                       25 % ∙ 20 +
+                                                                                       25 % ∙ 20 = 14
+                                                                                 Path planning
+  Dynamic programming – stochastic
+                                                                                             29
+
+
+
+                                                                   50 %
+▪ Why not use Dijktra to compute the values?
+                                                                                     50     20    10
+▪ Iterative approach can be extended to take the
+  uncertainty of motion into account (stochastic actions)   25 %          25 %       50           10
+
+▪ DP with stochastic actions keeps obstacle clearance                                50     20    10
+
+
+                                                                   50 %
+                                                                                          𝑉UP = 1 +
+                                                                                          50 % ∙ 20 +
+                                                                                          25 % ∙ 50 +
+                                                            25 %          25 %            25 % ∙ 10 = 26
+                                                                                       𝑉RIGHT = 1 +
+                                                                                       50 % ∙ 10 +
+                                                                                       25 % ∙ 20 +
+                                                                                       25 % ∙ 20 = 14
+                                                                       Path planning
+  Path smoothing
+                                                                                  30
+
+
+
+
+▪ Grid-based planners yield paths that are aligned with the
+  grid and do not consider kinematic constraints of the robot
+▪ In actual scenario, we would like the path to be smooth,
+  i.e., it does not contain sharp turns
+
+▪ Smoothing algorithm:
+    1. Let us have path 𝑋 = 𝑥𝑖 𝑁
+                               𝑖=1
+
+    2. Create copy of the original path 𝑌 = 𝑋
+    3. Optimize:
+            ▪ (𝑥𝑖 − 𝑦𝑖 )2 → min       𝑦𝑖 = 𝑦𝑖 + 𝛼(𝑥𝑖 − 𝑦𝑖 )
+            ▪ (𝑦𝑖 − 𝑦𝑖+1 )2 → min     𝑦𝑖 = 𝑦𝑖 + 𝛽(𝑦𝑖 − 𝑦𝑖+1 )
+▪ Iterative method:
+    (𝑘+1)
+   𝑦𝑖       = 𝑦𝑖 + 𝛼 𝑥𝑖 − 𝑦𝑖 + 𝛽 𝑦𝑖−1 + 𝑦𝑖+1 − 2𝑦𝑖 ,     𝑖 = 2…𝑁 − 1
+                                                    Path planning
+     Path smoothing – weights
+                                                               31
+
+
+
+
+ 𝛼 = 0, 𝛽 = 0                   𝛼 = 0.5, 𝛽 = 0.25
+
+
+
+
+𝛼 = 0.5, 𝛽 = 0.5                𝛼 = 0.25, 𝛽 = 0.5
+                                                                                                                                                                                       Path planning
+                    Summary
+                                                                                                                                                                                                  32
+
+
+
+
+              ▪ Path (motion) planning
+                       ▪ Given map of the workspace and description of the robot, find collistion-free
+                         sequence of steps (configurations) from the initial to the goal point.
+                       ▪ Completeness and optimality
+                       ▪ Assign costs to configuration transitions
+                       ▪ Usually reduced to a search in a graph
+
+              ▪ Planning based on A*
+                       ▪ Convert map to occupancy grid and connect adjacent cells by graph edges
+                       ▪ Sort open nodes in queue by sum of the cost-to-come and the cost-to-go
+                         (heuristic) function
+                       ▪ Faster than uninformed search
+                       ▪ Finds optimal path between two points
+                                                                                                                                                                                                       [1]
+              ▪ Path smoothing – iterative gradient algorithm
+
+1. CHAM, Jorge. R.O.B.O.T. Comics: Path Planning In: Willow Garage [online]. 2009 [cit. 2021-02-28]. Available at: http://www.willowgarage.com/blog/2009/09/04/robot-comics-path-planning
+                                                      33
+
+
+
+
+                Tomas Lazna
+            tomas.lazna@ceitec.vutbr.cz
+
+
+            Brno University of Technology
+Faculty of Electrical Engineering and Communication
+    Department of Control and Instrumentation
+
+
+
+
+            Robotics and AI Research Group
+

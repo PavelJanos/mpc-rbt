@@ -1,0 +1,609 @@
+2 – Probabilistic robotics
+Advanced Methods for Mapping and Self-localization in Robotics
+MPC-MAP
+
+
+
+
+Petr Gabrlik
+Brno University of Technology
+2025
+                                          2 – Probabilistic robotics
+                                                                  2
+
+
+
+
+ Probabilistic robotics
+Key ideas of the probabilistic approach
+                                                     2 – Probabilistic robotics
+                     1D localization example
+                                                                                         3
+
+
+
+                                                         I‘ve a map, but I‘ve
+                                                          absolutely no idea
+                                                             where I am.
+
+
+                                                         Let's use my door
+                                                         sensor! It says I'm
+                                                         probably at a door.
+
+
+                                                           Ok, I'm
+                                                          probably
+                                                          at a door.
+
+                                                             Let's go on. I'm getting
+                                                           lost, but I still have some
+                                                            ideas where I could be.
+
+
+                                                         Let’s use the sensor
+                                                         again. Great, I'm at
+                                                            another door!
+
+
+                                                           Based on my previous
+                                                             guess and this new
+                                                            information I'm very
+                                                         likely at the second door.
+
+
+                                                          Let's go on. I'm getting little
+                                                           lost again, but I still know
+                                                             where I probably am.
+
+                                               [1]
+1. http://www.probabilistic-robotics.org/
+                                                                                                                  2 – Probabilistic robotics
+                   Probabilistic robotics – the concept
+                                                                                                                                                    4
+
+
+
+
+              ▪ Probabilistic approach – nothing is deterministic, all
+                phenomena are stochastic
+
+
+              ▪ Uncertainty is in both:
+                       ▪ Perception – sensor/measured data are not 100 % reliable; data from
+                                                                                                                  Noisy measurement (e.g., GNSS
+                         all real sensors are more or less noisy                                                        positioning data) [1]
+
+                       ▪ Action – robot actions/movements are not 100 % reliable; all actions
+                         taken differ to some extent from the action desired
+
+
+              ▪ All uncertain phenomena are represented statistically
+
+
+
+                                                                                                               Noisy motion - propagation of error [2]
+1. https://www.skyhook.com/blog/best-practices-measure-location-accuracy-geo-positioning-performance-metrics
+2. https://en.wikipedia.org/wiki/Monte_Carlo_localization
+                                                                   2 – Probabilistic robotics
+  Probabilistic robotics – the concept
+                                                                                            5
+
+
+
+
+                                                    Noisy action
+▪ Robot navigation in the probabilistic concept                                     Noisy perception
+  considers the uncertainties to provide optimal
+  solution.
+
+
+▪ This is especially crucial for the localization
+  task – what is the most probable robot
+  position according noisy sensor data? And
+  considering known uncertain actions?
+
+
+
+                                                                                    Most probable solution
+                                     2 – Probabilistic robotics
+                                                             6
+
+
+
+
+       Probability
+Basic terms and distribution types
+                                                                                                     2 – Probabilistic robotics
+                    Probability
+                                                                                                                                      7
+
+
+
+
+              ▪ Probability expresses how likely a random event occurs
+                       ▪ A number between 0 and 1; higher value → higher probability
+
+
+
+              ▪ Probability distribution
+                       ▪ „Mathematical function that gives the probabilities of occurrence of
+                         different possible outcomes for an experiment.“ [1]
+                       ▪ „Mathematical description of a random phenomenon in terms of its
+                         sample space and the probabilities of events.“ [1]
+                                                                                                PMF (left) and PDF (right) examples [1]
+
+                       ▪ Discrete space → probability mass function (PMF)
+                       ▪ Continuous space → probability density function (PDF) or cumulative
+                         distribution function (CDF)
+
+
+
+
+1. https://medium.com/analytics-vidhya/probability-distributions-444e7babf2e1
+                                                                                                                                                                          2 – Probabilistic robotics
+                    Probability mass function (PMF)
+                                                                                                                                                                                                  8
+
+
+
+
+              ▪ Probability mass function (PMF) – probability that a discrete random
+                variable is exactly equal to some value
+                       ▪ 𝑝𝑋 𝑥 = 𝑃(𝑋 = 𝑥)
+
+              ▪ The probabilities sum up to 1
+                       ▪ σ𝑥 𝑝𝑥 𝑥 = 1
+
+              ▪ Values are non-zero, positive
+                       ▪ 𝑝𝑋 (𝑥) ≥ 0
+
+
+
+
+                                                                                                                                                   Various probability mass functions (PMF) [1]
+
+
+
+1. https://medium.com/@amanatulla1606/understanding-probability-distributions-in-statistics-and-its-application-in-machine-learning-e62751e83c39
+                                                                                                                                                           2 – Probabilistic robotics
+                  Probability density function (PDF)
+                                                                                                                                                                                            9
+
+
+
+
+             ▪ Probability density function (PDF) – a function 𝑓𝑋 describing the
+               infinitesimal probability of any given value of a continuous random
+               variable 𝑋
+
+             ▪ The probability 𝑃 of a particular value equals 0
+                      ▪ 𝑃 𝑋 = 𝑓𝑋 𝑥 = 0
+
+             ▪ The probability of a particular range of value equals to the integral of
+               the PDF over the range                                                                                                                            PDF examples [1]
+
+                      ▪ The area between the PDF and horizontal axis over the range
+                                                  𝑏
+                      ▪ 𝑃 𝑎 ≤ 𝑋 ≤ 𝑏 = ‫𝑥𝑑 𝑥 𝑋𝑓 𝑎׬‬
+
+             ▪ PDF is nonnegative everywhere, integrates to 1
+                                                       ∞
+                      ▪ 𝑃 −∞ ≤ 𝑋 ≤ ∞ = ‫׬‬−∞ 𝑓𝑋 𝑥 𝑑𝑥 = 1
+
+                                                                                                                                                    Probability equals to the area under the PDF [2]
+
+
+1. https://www.researchgate.net/publication/269949106_A_Study_on_the_Economic_Evaluation_for_a_Feasibility_Study_in_Molybdenum_Mineral_Processing
+2. https://math24.net/probability-density-function.html
+                                                                                                       2 – Probabilistic robotics
+                     Cumulative distribution function (CDF)
+                                                                                                                              10
+
+
+
+
+                ▪ Cumulative distribution function (CDF) – 𝐹𝑋 𝑥 represent a cumulative representation of the PDF
+
+                ▪ Describes the probability that the random variable is no larger than a given value
+                         ▪ The area under the PDF from −∞ to 𝑥
+                                              𝑥
+                         ▪ 𝐹𝑋 𝑥 = ‫׬‬−∞ 𝑓𝑋 𝑢 𝑑𝑢
+
+
+
+
+                                                                 PDF and corresponding CDF [1]
+
+
+
+
+1. https://en.wikipedia.org/wiki/Probability_distribution
+                                                                                                                                               2 – Probabilistic robotics
+                    Uniform distribution
+                                                                                                                                                                                 11
+
+
+
+
+               ▪ Uniform distribution – all hypotheses will occur with equal probability
+
+               ▪ Discrete space – a finite number of values has equal probability
+                                        1
+                        ▪ 𝑝 𝑥 =                    𝑛 =𝑏−𝑎+1                 k ∈ {𝑎, 𝑎 + 1, ⋯ , 𝑏 − 1, 𝑏}                       𝑏≥𝑎
+                                        𝑛
+
+                                                                                                                                      PMF of the discrete uniform distribution example [1]
+               ▪ Continuous space – all intervals of the same length within the bounds are
+                 equally probable
+                                            1
+                                     for 𝑥𝜖[𝑎, 𝑏]
+                        ▪ 𝑓 𝑥 = ൝𝑏−𝑎                               −∞ < 𝑎 < 𝑏 < ∞
+                                  0 otherwise
+
+               ▪ Examples
+                        ▪ Rolling the dice                                                                                           PDF of the continuous uniform distribution example [2]
+
+                        ▪ Initial guess in the global localization task
+
+
+
+
+1. https://en.wikipedia.org/wiki/Discrete_uniform_distribution
+2. https://en.wikipedia.org/wiki/Continuous_uniform_distribution
+3. http://www.probabilistic-robotics.org/                                    Dice rolling – typical discrete uniform distribution    Initial guess with the uniform distribution [3]
+                                                                                                          2 – Probabilistic robotics
+                     Normal distribution
+                                                                                                                                         12
+
+
+
+
+               ▪ Normal distribution = Gaussian distribution – type of continuous
+                 probability distribution
+               ▪ Important in natural sciences – measurement errors caused by many
+                 independent processes posses nearly normal distribution
+               ▪ Notation: 𝑝(𝑥)~𝒩(𝑥; 𝜇, 𝜎 2 )
+                                                 1 𝑥−𝜇 2
+                                            1
+               ▪ PDF: 𝑓 𝑥               =       − (
+                                               𝑒 2 𝜎 )
+                                          𝜎 2𝜋
+                                                                                                        PDF of normal distribution [1]
+               ▪ Parametric distribution defined by:
+                         ▪ Mean (expectation) 𝜇
+                         ▪ Standard deviation 𝜎 or variance 𝜎 2
+
+               ▪ Examples
+                         ▪ Natural random processes
+                         ▪ Approximate distribution of many sensors in robotics
+                                                                                     Sensor measurements are often near normal [1]
+
+
+1. http://www.probabilistic-robotics.org/
+                                                                                              2 – Probabilistic robotics
+                     Normal distribution – probabilities
+                                                                                                                              13
+
+
+
+
+               ▪ In the measurement field the uncertainty is often expresses by
+                 an interval of possible values occurring with certain probability
+                 defined via standard deviation 𝜎
+               ▪ variable = value ± inverval             typically meaning 1𝜎 interval
+               ▪ Well known probabilities for the normal distribution
+                        ▪ 𝑃 𝜇 − 𝜎 ≤ 𝑋 ≤ 𝜇 + 𝜎 = 68,3 %
+                                                                                         PDF of normal distribution with probabilities
+                        ▪ 𝑃 𝜇 − 2𝜎 ≤ 𝑋 ≤ 𝜇 + 2𝜎 = 95,4 %                                   for various intervals defined with 𝜎 [1]
+
+                        ▪ 𝑃 𝜇 − 3𝜎 ≤ 𝑋 ≤ 𝜇 + 3𝜎 = 99,7 %
+
+
+
+
+1. https://en.wikipedia.org/wiki/Normal_distribution
+                                                                                                                         2 – Probabilistic robotics
+                     Multivariate normal distribution
+                                                                                                                                                          14
+
+
+
+
+               ▪ Normal distribution over vectors is called multivariate (𝑥 is a vector)
+               ▪ Often used in localization algorithms when the space vector is
+                 multidimensional
+
+               ▪ Notation: 𝑝(𝑥)~𝒩(𝑥; 𝜇, Σ)
+                                                                                                                                   [1]
+
+                                                                    1
+                                                                    −         1
+               ▪ PDF: 𝑝 𝑥 = det 2𝜋Σ                                 2   exp{− 2 (𝑥 − 𝜇)𝑇 Σ −1 (𝑥 − 𝜇)}
+
+               ▪ Parameters:
+                        ▪ Mean vector (expectation vector) 𝜇
+                        ▪ Covariance matrix Σ
+
+
+
+
+                                                                                                         Normal distribution of two variables is often illustrated
+1. http://www.probabilistic-robotics.org/                                                                             with ellipse in 2D space [2]
+2. https://en.wikipedia.org/wiki/Multivariate_normal_distribution
+                                                                                                                                                                          2 – Probabilistic robotics
+                    Covariance and covariance matrix
+                                                                                                                                                                                                         15
+
+
+
+
+               ▪ Covariance is a measure of the joint variability of two random variables
+                        ▪ The mean of the product of 𝑋 and 𝑌 random variable deviations from their
+                          means
+                                                                                                                                                    cov 𝑋, 𝑌 > 0                cov 𝑋, 𝑌 < 0              cov 𝑋, 𝑌 = 0
+                        ▪ cov 𝑋, 𝑌 = 𝐸[(𝑋 − 𝐸[𝑋])(𝑌 − 𝐸[𝑌])] expectation 𝐸 𝑋 ≈ mean(𝑋)
+                        ▪ Alternative notations: 𝜎𝑋𝑌 or 𝜎(𝑋, 𝑌)
+                        ▪ Covariance with itself is variance: cov 𝑋, 𝑋 = var 𝑋 ≡ 𝜎 2 (𝑋)
+                        ▪ Zero covariance means independent variables
+                        ▪ Normalized covariance → correlation
+               ▪ Covariance matrix contains covariance between each pair of elements                                                                      The covariance sign and the „shape“ of data/ellipses [1]
+                        ▪ Matrix dimension: dimensionality of the state 𝑥 squared
+                        ▪ Key matrix properties: square, symmetric, quadratic
+
+                             𝜎12              ⋯ 𝜎1𝑛
+                        ▪ Σ=  ⋮               ⋱  ⋮
+                             𝜎𝑛1              ⋯ 𝜎𝑛2
+                        ▪ Main diagonal contains variances
+                                                                                                                          Covariance matrix describing
+                                                                                                                             noise characteristics of a
+1. https://geostatisticslessons.com/lessons/errorellipses                                                                   process (robot motion) [2]
+2. https://answers.ros.org/question/353624/what-is-the-default-noise-parameters-in-sensor-inputs-in-robot_localization/
+                                                                             2 – Probabilistic robotics
+  Combining probabilities
+                                                                                                    16
+
+
+
+
+▪ The probabilities can be combined in different ways according to the phenomenon we are
+  describing
+
+
+
+
+▪ The most important event in the probabilistic robotics is A given B
+                                              2 – Probabilistic robotics
+                                                                     17
+
+
+
+
+       Bayes' theorem
+The theorem and its application in robotics
+                                                                                                               2 – Probabilistic robotics
+                 Bayes' theorem
+                                                                                                                                      18
+
+
+
+
+            ▪ Statistical theory based on the Bayesian interpretation of probability
+            ▪ Probability is based on prior knowledge of an event and related evidence
+            ▪ The probability expresses a degree of belief in an event
+
+
+                                          𝑃 𝐸 𝐻 𝑃(𝐻)           𝑃 𝐸 𝐻 𝑃(𝐻)
+                                   𝑃 𝐻𝐸 =            =                          = 𝜂𝑃 𝐸 𝐻 𝑃(𝐻)
+                                             𝑃(𝐸)      𝑃 𝐸 𝐻 𝑃 𝐻 + 𝑃 𝐸 ¬𝐻 𝑃(¬𝐻)
+
+            ▪ 𝐻 hypothesis whose probability may be affected by evidence
+            ▪ 𝐸 evidence (observation) – new data that were not used in computing the prior probability
+            ▪ 𝑃(𝐻) prior probability – the estimate of the probability of the hypothesis 𝐻 before the data 𝐸
+            ▪ 𝑃 𝐻 𝐸 posterior probability – is the probability of 𝐻 after 𝐸 is observed
+            ▪ 𝑃 𝐸 𝐻 likelihood – probability of observing 𝐸 given 𝐻
+            ▪ 𝑃(𝐸) model evidence, probability of seeing evidence independently on 𝐻
+
+
+Recommended resource: https://www.youtube.com/watch?v=HZGCoVF3YvM
+                                                       2 – Probabilistic robotics
+Bayes' theorem
+                                                                              19
+
+
+
+
+                                     Likelihood
+
+
+
+ Posterior probability                            Prior probability
+
+                                𝑃 𝐸 𝐻 𝑃(𝐻)
+                         𝑃 𝐻𝐸 =
+                                   𝑃(𝐸)
+
+
+
+                             Model evidence
+                                                  2 – Probabilistic robotics
+Bayes' theorem
+                                                                         20
+
+
+
+
+                               Sensor model
+
+
+
+    New estimate                              Old estimate
+
+                          𝑃 𝐸 𝐻 𝑃(𝐻)
+                   𝑃 𝐻𝐸 =
+                             𝑃(𝐸)
+
+
+
+                       Normalization
+                                                                                                                         2 – Probabilistic robotics
+                     Bayes filter
+                                                                                                                                                       21
+
+
+
+                                                                                                     Prediction (control update)
+
+
+
+               ▪ Bayes filter – standard approach for the state estimation in
+                 robotics
+
+               ▪ General algorithm for calculating belief from measurement 𝑧 and
+                 control data 𝑢
+
+               ▪ Recursive, includes the previous state 𝑥𝑡−1
+                                                                                                     Correction (measurement update)
+               ▪ Each period includes prediction and correction step
+
+               ▪ Bayes filter forms the basis for widely used algorithms:
+                         ▪ Kalman filter – Gaussian filter, belief is represented via normal
+                           distribution
+                         ▪ Particle filter – Monte Carlo filter, belief is represented by a set of
+                           particles
+                                                                                                              The evolution of controls, states and measurements [1]
+
+
+
+
+1. http://www.probabilistic-robotics.org/
+                                                        2 – Probabilistic robotics
+                     Bayes filter
+                                                                                       22
+
+
+                Prior (initial) belief 𝑏𝑒𝑙(𝑥0 )
+
+
+
+
+                                                                 Filter iteration 1
+                    Measurement 𝑝(𝑧1 |𝑥1 )
+
+
+
+
+                     Correction, posterior
+                     belief 𝑏𝑒𝑙(𝑥1 )
+
+
+
+                      Prediction, posterior
+                      belief 𝑏𝑒𝑙(𝑥2 )
+
+
+
+
+                                                                 Filter iteration 2
+                    Measurement 𝑝(𝑧2 |𝑥2 )
+
+
+
+                    Correction, posterior
+                    belief 𝑏𝑒𝑙(𝑥2 )
+
+
+
+
+                    Prediction, posterior
+
+
+
+
+                                                                  Filter iteration 3
+                    belief 𝑏𝑒𝑙(𝑥3 )
+
+
+                                                  [1]
+1. http://www.probabilistic-robotics.org/
+                         2 – Probabilistic robotics
+                                                23
+
+
+
+
+    Sensors
+Range and pose sensors
+                                                                                2 – Probabilistic robotics
+   Range sensors
+                                                                                                            24
+
+
+
+
+▪ Provide information about the distance and the (eventually)
+  azimuth of the object with respect to robot’s coordinate
+  system
+
+▪ The most common types:
+    ▪ LiDAR – narrow laser beam, time-of-flight
+         ▪   Mapping, localization, obstacle detection
+         ▪   1D, 2D and 3D
+
+    ▪ Ultrasonic – wide „beam“, time-of-flight
+         ▪   Obstacle detection
+         ▪   1D only
+
+    ▪ Radar – wide „beam“, time-of-flight, Doppler              2D LiDAR scan         Ultrasonic sensor characteristics
+         ▪   Obstacle detection, velocity measurement
+         ▪   1D (2D, 3D)
+                                                                                                                                      2 – Probabilistic robotics
+                    External pose sensors
+                                                                                                                                                               25
+
+
+
+
+               ▪ Determines position or orientation or both position
+                 and orientation – pose within an external coordinate
+                 system
+
+               ▪ The most common types:
+                        ▪ GNSS – Global Navigation Satellite System
+                                ▪   Global, world-wide localization
+                                                                                            Beacon loclalization (UWB, BT, ...) [3]                    GNSS [1]
+                                ▪   Position only, orientation – dual-antenna RTK systems
+
+                        ▪ Motion capture and beacon localization
+                                ▪   Local localization
+                                ▪   Based on cameras and reflective markers or on radio
+                                    beacons and receivers
+
+                        ▪ Fiducial markers
+                                ▪   Local localization
+                                                                                                                                                   Motion Capture [2]
+                                ▪   Relative pose of graphical marker and camera                     Fiducial markers/tags [4]
+
+1.   http://what-when-how.com/
+2.   https://deva90sapmc8w.cloudfront.net/roboticsPrime17w_8-450h.png
+3.   https://www.researchgate.net/publication/336832935
+4.   https://haowensh.com/assets/img/2020/kdc/frame_confirmation.png
+                                                      2 – Probabilistic robotics
+                                                                             27
+
+
+
+
+                 Petr Gabrlik
+                   gabrlik@vut.cz
+
+
+            Brno University of Technology
+Faculty of Electrical Engineering and Communication
+    Department of Control and Instrumentation
+
+
+
+
+            Robotics and AI Research Group
+

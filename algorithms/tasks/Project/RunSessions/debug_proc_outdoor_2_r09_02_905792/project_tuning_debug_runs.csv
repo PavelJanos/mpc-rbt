@@ -1,0 +1,2 @@
+map_name,repeat_id,status,steps,goal_error_m,travelled_m,runtime_s,session_subdir
+outdoor_2,9,timeout,2050,9.4650448472825,20.0884571365185,885.3283871,C:\Users\pavell\Desktop\Map\MPC-MAP-Student-main\MPC-MAP-Student-main\algorithms\tasks\Project\RunSessions\debug_proc_outdoor_2_r09_02_905792\outdoor_2_run_09
