@@ -1,2 +1,0 @@
-map_name,repeat_id,start_x,start_y,start_theta,goal_x,goal_y,max_vel,cases_mode,status,success,steps,goal_error_m,travelled_m,runtime_s,final_x,final_y,final_theta
-indoor_2,3,1.2,0.8,-2.57603303972572,9.2,9.2,1,regenerate,goal,1,1700,0.49456448213509,31.0197767415646,228.9138494,9.07917564762503,8.72042153628137,-5.12360367092469

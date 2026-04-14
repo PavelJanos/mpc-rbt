@@ -1,7 +1,0 @@
-map_name,success_rate,goal_runs,wall_runs,out_runs,timeout_runs,mean_steps_success,mean_goal_error_m,mean_runtime_s,goal_x,goal_y,max_vel
-indoor_1,0,0,0,0,1,NaN,1.04101695946879,102.9613455,0.8,0.8,1
-indoor_2,0,0,0,0,1,NaN,11.3231423525301,231.8897757,0.8,0.8,1
-indoor_3,0,0,0,0,1,NaN,6.09774108477771,178.491664,0.8,0.8,1
-mixed_1,0,0,0,1,0,NaN,18.2072563559619,390.125743,0.6,14.4,1
-outdoor_1,0,0,0,0,1,NaN,3.50422109327879,283.1187644,0.6,7.2,1
-outdoor_2,1,1,0,0,0,1319,0.491159247076909,207.8431395,0.6,11.4,1
