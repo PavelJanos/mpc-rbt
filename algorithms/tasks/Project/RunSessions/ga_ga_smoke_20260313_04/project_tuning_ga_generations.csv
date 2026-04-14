@@ -1,2 +1,0 @@
-run_idx,generation_idx,best_score,mean_score,median_score,worst_score,best_success_rate,best_mean_goal_error_m,best_mean_runtime_s,best_mean_steps
-1,1,13235.8712052667,13377.6788246965,13331.384240754,13612.0756120111,0,10.3968392157295,10.6347857,120

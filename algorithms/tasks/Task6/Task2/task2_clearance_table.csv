@@ -1,4 +1,0 @@
-planner,path_found,clearance_ok,min_clearance_m,path_length_m,waypoints
-astar,1,1,0.3,20.9681240867132,93
-dijkstra,1,1,0.353836120259083,20.9681240867132,93
-greedy,1,1,0.3,24.9882250993909,116
