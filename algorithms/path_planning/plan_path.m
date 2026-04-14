@@ -7,6 +7,12 @@ if is_indoor_1_map(read_only_vars.map)
     return;
 end
 
+if is_outdoor_1_map(read_only_vars.map)
+    % Task5/Task1: handcrafted trajectory from [2,2] to [16,2].
+    path = create_task5_task1_path();
+    return;
+end
+
 path = astar(read_only_vars, public_vars);
 path = smooth_path(path);
 
@@ -16,6 +22,12 @@ function tf = is_indoor_1_map(map)
 tf = isequal(size(map.walls), [6, 4]) ...
     && isequal(round(map.goal, 6), [9, 9]) ...
     && isequal(round(map.limits, 6), [0, 0, 10, 10]);
+end
+
+function tf = is_outdoor_1_map(map)
+tf = isequal(size(map.walls), [15, 4]) ...
+    && isequal(round(map.goal, 6), [16, 2]) ...
+    && isequal(round(map.limits, 6), [0, 0, 20, 15]);
 end
 
 function path = create_task3_task2_path()
@@ -58,5 +70,36 @@ path = [path; [x5, y5]];
 
 % Ensure exact goal as the last waypoint.
 path(end, :) = [9, 9];
+end
+
+function path = create_task5_task1_path()
+% Task5/Task1: manual trajectory for outdoor_1
+% Start [2,2] -> Goal [16,2], includes curved segments.
+
+path = [];
+
+% 1) Vertical segment up from start.
+y1 = linspace(2, 8, 55)';
+path = [path; [2 * ones(numel(y1), 1), y1]];
+
+% 2) Curved horizontal traverse in upper corridor.
+x2 = linspace(2, 11, 90)';
+y2 = 8 + 0.6 * sin(2 * pi * (x2 - 2) / (11 - 2));
+path = [path; [x2, y2]];
+
+% 3) Smooth bezier descent to goal.
+t = linspace(0, 1, 85)';
+P0 = [11, 8];
+P1 = [13, 8.2];
+P2 = [15, 4.4];
+P3 = [16, 2];
+bezier = (1 - t).^3 .* P0 + ...
+    3 * (1 - t).^2 .* t .* P1 + ...
+    3 * (1 - t) .* t.^2 .* P2 + ...
+    t.^3 .* P3;
+path = [path; bezier];
+
+path(1, :) = [2, 2];
+path(end, :) = [16, 2];
 end
 

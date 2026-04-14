@@ -19,7 +19,14 @@ public_vars.particles = update_particle_filter(read_only_vars, public_vars);
 [public_vars.mu, public_vars.sigma] = update_kalman_filter(read_only_vars, public_vars);
 
 % 11. Estimate current robot position
-public_vars.estimated_pose = estimate_pose(public_vars); % (x,y,theta)
+% In EKF-enabled mode prefer EKF state as the control pose estimate.
+if isfield(public_vars, 'kf_enabled') && public_vars.kf_enabled ...
+        && isfield(public_vars, 'mu') && ~isempty(public_vars.mu) ...
+        && all(isfinite(public_vars.mu(:)))
+    public_vars.estimated_pose = public_vars.mu(:)'; % (x,y,theta)
+else
+    public_vars.estimated_pose = estimate_pose(public_vars); % (x,y,theta)
+end
 
 % Task 2: Collect sensor data
 public_vars.lidar_history = [public_vars.lidar_history; read_only_vars.lidar_distances];

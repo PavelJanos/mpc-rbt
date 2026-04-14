@@ -11,6 +11,7 @@ if isempty(state) || read_only_vars.counter == 1
     state.wp_idx = 1;
     state.path_idx = 1;
     state.prev_cte = 0;
+    state.last_valid_pose = [];
 end
 
 if ~isfield(public_vars, 'controller_mode') || isempty(public_vars.controller_mode)
@@ -24,6 +25,16 @@ if isempty(path) || size(path, 1) < 2
 end
 
 pose = get_pose(read_only_vars, public_vars);
+if isempty(pose) || numel(pose) < 3 || any(~isfinite(pose(1:3)))
+    if ~isempty(state.last_valid_pose) && all(isfinite(state.last_valid_pose(1:3)))
+        pose = state.last_valid_pose;
+    else
+        public_vars.motion_vector = [0, 0];
+        return;
+    end
+else
+    state.last_valid_pose = pose;
+end
 if isempty(pose)
     public_vars.motion_vector = [0, 0];
     return;
@@ -51,12 +62,24 @@ switch lower(public_vars.controller_mode)
         [v, w, state] = ctrl_pure_pursuit(pose, path, state);
 end
 
+if ~isfinite(v) || ~isfinite(w)
+    public_vars.motion_vector = [0, 0];
+    return;
+end
+
 public_vars.motion_vector = vw_to_wheels(v, w, drive);
 
 end
 
 function pose = get_pose(read_only_vars, public_vars)
 pose = [];
+
+if isfield(public_vars, 'use_estimated_pose_only') && public_vars.use_estimated_pose_only ...
+        && isfield(public_vars, 'estimated_pose') && ~isempty(public_vars.estimated_pose)
+    pose = public_vars.estimated_pose;
+    return;
+end
+
 if isfield(read_only_vars, 'mocap_pose') && ~isempty(read_only_vars.mocap_pose)
     pose = read_only_vars.mocap_pose;
 elseif isfield(public_vars, 'estimated_pose') && ~isempty(public_vars.estimated_pose)
@@ -145,6 +168,11 @@ v = v_nom * (1 - 0.60 * min(abs(e_heading) / pi, 1));
 end
 
 function uv = vw_to_wheels(v, w, drive)
+if ~isfinite(v) || ~isfinite(w)
+    uv = [0, 0];
+    return;
+end
+
 L = drive.interwheel_dist;
 vR = v + 0.5 * L * w;
 vL = v - 0.5 * L * w;
