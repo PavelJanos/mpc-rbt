@@ -1,2 +1,0 @@
-run_idx,best_score,success_rate,success_count,case_count,mean_goal_error_m,max_goal_error_m,mean_runtime_s,mean_steps,mean_travelled_m,status_signature,public_vars_path_clearance_m
-1,13235.8712052667,0,0,1,10.3968392157295,10.3968392157295,10.6347857,120,1.47269500917606,timeout:1,0.25

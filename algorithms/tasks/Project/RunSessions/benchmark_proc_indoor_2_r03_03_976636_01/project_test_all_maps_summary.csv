@@ -1,2 +1,0 @@
-map_name,success_rate,goal_runs,wall_runs,out_runs,timeout_runs,mean_steps_success,mean_goal_error_m,mean_runtime_s,goal_x,goal_y,max_vel
-indoor_2,1,1,0,0,0,1700,0.49456448213509,228.9138494,9.2,9.2,1
