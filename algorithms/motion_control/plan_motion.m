@@ -12,6 +12,7 @@ if isempty(state) || read_only_vars.counter == 1
     state.path_idx = 1;
     state.prev_cte = 0;
     state.last_valid_pose = [];
+    state.start_heading_aligned = false;
 end
 
 if ~isfield(public_vars, 'controller_mode') || isempty(public_vars.controller_mode)
@@ -49,6 +50,31 @@ if norm(pose(1:2) - goal) < 0.2
     return;
 end
 
+% Pre-drive orientation stage:
+% before moving, rotate in place if heading is strongly misaligned with the
+% first path segment direction.
+if isfield(public_vars, 'skip_start_alignment') && public_vars.skip_start_alignment
+    state.start_heading_aligned = true;
+end
+
+if ~state.start_heading_aligned
+    target_heading = initial_path_heading(path);
+    e0 = wrap_to_pi(target_heading - pose(3));
+    align_tol = 20 * pi / 180;     % [rad]
+    release_tol = 12 * pi / 180;   % [rad], hysteresis
+    k_align = 1.3;
+    w_align_max = 0.40;
+    w_align = max(min(k_align * e0, w_align_max), -w_align_max);
+
+    if abs(e0) > align_tol
+        public_vars.motion_vector = vw_to_wheels(0, w_align, drive);
+        return;
+    end
+    if abs(e0) <= release_tol
+        state.start_heading_aligned = true;
+    end
+end
+
 switch lower(public_vars.controller_mode)
     case 'waypoint_p'
         [v, w, state] = ctrl_waypoint_p(pose, path, state);
@@ -74,17 +100,12 @@ end
 function pose = get_pose(read_only_vars, public_vars)
 pose = [];
 
-if isfield(public_vars, 'use_estimated_pose_only') && public_vars.use_estimated_pose_only ...
-        && isfield(public_vars, 'estimated_pose') && ~isempty(public_vars.estimated_pose)
+if isfield(public_vars, 'estimated_pose') && ~isempty(public_vars.estimated_pose)
     pose = public_vars.estimated_pose;
     return;
 end
 
-if isfield(read_only_vars, 'mocap_pose') && ~isempty(read_only_vars.mocap_pose)
-    pose = read_only_vars.mocap_pose;
-elseif isfield(public_vars, 'estimated_pose') && ~isempty(public_vars.estimated_pose)
-    pose = public_vars.estimated_pose;
-end
+% No MoCap fallback by design.
 end
 
 function [v, w, state] = ctrl_waypoint_p(pose, path, state)
@@ -225,6 +246,23 @@ psi_path = atan2(best_tangent(2), best_tangent(1));
 rel = point - best_proj;
 left_normal = [-best_tangent(2), best_tangent(1)];
 e_ct = dot(rel, left_normal);
+end
+
+function psi0 = initial_path_heading(path)
+if size(path, 1) < 2
+    psi0 = 0;
+    return;
+end
+idx = 2;
+while idx <= size(path, 1) && norm(path(idx, :) - path(1, :)) < 1e-6
+    idx = idx + 1;
+end
+if idx > size(path, 1)
+    psi0 = 0;
+else
+    d = path(idx, :) - path(1, :);
+    psi0 = atan2(d(2), d(1));
+end
 end
 
 function a = wrap_to_pi(a)

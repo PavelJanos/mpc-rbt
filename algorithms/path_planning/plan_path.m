@@ -1,20 +1,44 @@
 function [path] = plan_path(read_only_vars, public_vars)
 %PLAN_PATH Summary of this function goes here
 
-if is_indoor_1_map(read_only_vars.map)
+% Reuse current path unless explicit replanning is requested.
+if isfield(public_vars, 'path') && ~isempty(public_vars.path) ...
+        && ~(isfield(public_vars, 'replan_path') && public_vars.replan_path)
+    path = public_vars.path;
+    return;
+end
+
+force_grid = isfield(public_vars, 'force_grid_planner') && public_vars.force_grid_planner;
+
+if ~force_grid && is_indoor_1_map(read_only_vars.map)
     % Task3/Task2: handcrafted safe path with curved segments.
     path = create_task3_task2_path();
     return;
 end
 
-if is_outdoor_1_map(read_only_vars.map)
+if ~force_grid && is_outdoor_1_map(read_only_vars.map)
     % Task5/Task1: handcrafted trajectory from [2,2] to [16,2].
     path = create_task5_task1_path();
     return;
 end
 
-path = astar(read_only_vars, public_vars);
-path = smooth_path(path);
+planner_mode = 'astar';
+if isfield(public_vars, 'path_planner_mode') && ~isempty(public_vars.path_planner_mode)
+    planner_mode = lower(string(public_vars.path_planner_mode));
+end
+
+switch planner_mode
+    case "astar"
+        path = astar(read_only_vars, public_vars);
+    case "dijkstra"
+        path = dijkstra(read_only_vars, public_vars);
+    case "greedy"
+        path = greedy_best_first(read_only_vars, public_vars);
+    otherwise
+        path = astar(read_only_vars, public_vars);
+end
+
+path = smooth_path(path, read_only_vars, public_vars);
 
 end
 
