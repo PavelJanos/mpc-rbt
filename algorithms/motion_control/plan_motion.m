@@ -461,7 +461,7 @@ end
 end
 
 function [v, w, state, dbg] = ctrl_pure_pursuit(pose, path, state, read_only_vars, public_vars)
-v_nom = 0.46;
+v_nom = 0.55;
 lookahead_nom = 0.68;
 k_curve_slow = 0.95;
 goal_capture_dist = 0.9;

@@ -9,7 +9,7 @@ public_vars.kf.C = [1 0 0;
 public_vars.kf.R = diag([0.01, 0.01, 0.01]);
 
 % Measurement noise covariance (GNSS uncertainty).
-public_vars.kf.Q = diag([0.25, 0.25]);
+public_vars.kf.Q = diag([0.5, 0.5]);
 
 % Initialize belief (no MoCap dependency).
 if isfield(read_only_vars, 'gnss_position') && ~isempty(read_only_vars.gnss_position) ...
